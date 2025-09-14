@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaInstagram, FaLinkedin } from 'react-icons/fa';
+import { Eye, EyeOff, Slash, Instagram, Linkedin } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
-import { Eye, EyeOff, Slash } from 'lucide-react';
 
 interface VisibilityControlProps {
   onVisibilityChange?: (isVisible: boolean) => void;
@@ -21,13 +20,13 @@ const VisibilityControl: React.FC<VisibilityControlProps> = ({
     {
       id: 'instagram',
       name: 'Instagram',
-      icon: FaInstagram,
+      icon: Instagram,
       gradient: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)'
     },
     {
       id: 'linkedin',
       name: 'LinkedIn',
-      icon: FaLinkedin,
+      icon: Linkedin,
       gradient: '#0077B5'
     },
     {

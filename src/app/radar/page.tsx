@@ -107,7 +107,7 @@ const RadarScreen = () => {
         </div>
         
         {/* Gray separator line */}
-        <h1 className="border-t border-gray-600 mb-6"></h1>
+        <hr className="border-t border-gray-600 mb-6" />
         
         {/* Search Dropdown */}
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
