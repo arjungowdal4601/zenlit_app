@@ -3,10 +3,13 @@
 import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import SocialProfileCard from '@/components/SocialProfileCard';
+import VisibilityControl from '@/components/VisibilityControl';
 
 const RadarScreen = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(['instagram', 'linkedin', 'twitter']);
   // Mock data for nearby users
   const nearbyUsers = [
     {
@@ -77,6 +80,8 @@ const RadarScreen = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             
+
+            
             {/* Animated Hamburger Menu */}
             <div 
               onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -108,7 +113,7 @@ const RadarScreen = () => {
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
           searchOpen ? 'max-h-20 opacity-100 mb-4' : 'max-h-0 opacity-0'
         }`}>
-          <div className="bg-black border border-gray-300 rounded-lg p-3">
+          <div className="border border-gray-300 rounded-lg p-3">
             <input
               type="text"
               placeholder="Search users..."
@@ -118,23 +123,25 @@ const RadarScreen = () => {
           </div>
         </div>
         
-        {/* Menu Dropdown */}
-        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          dropdownOpen ? 'max-h-20 opacity-100 mb-6' : 'max-h-0 opacity-0'
+        {/* Visibility Control Dropdown */}
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out w-full max-w-2xl mx-auto ${
+          dropdownOpen ? 'max-h-96 opacity-100 mb-6' : 'max-h-0 opacity-0'
         }`}>
-          <div className="bg-black border border-gray-300 rounded-lg p-4">
-            <div className="text-center">
-              <span className="text-white text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                Coming Soon
-              </span>
-            </div>
-          </div>
+          <VisibilityControl 
+            onVisibilityChange={(visible) => setIsVisible(visible)}
+            onAccountsChange={(accounts) => setSelectedAccounts(accounts)}
+          />
         </div>
         
         {/* Nearby Users List */}
         <div className="w-full max-w-2xl mx-auto">
-          {nearbyUsers.map((user) => (
-            <SocialProfileCard key={user.id} user={user} />
+          {isVisible && nearbyUsers.map((user) => (
+            <SocialProfileCard 
+              key={user.id} 
+              user={user} 
+              isVisible={isVisible}
+              selectedAccounts={selectedAccounts.length === 0 ? [] : selectedAccounts}
+            />
           ))}
         </div>
       </div>
