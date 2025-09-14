@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FaInstagram, FaLinkedin } from 'react-icons/fa';
+import Image from 'next/image';
+import { MessageSquare, User, MessageCircle, Instagram, Linkedin } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
-import { FaRegUser, FaRegCommentDots } from 'react-icons/fa';
-import { MessageSquare } from 'lucide-react';
 
 interface SocialProfileCardProps {
   user: {
@@ -23,7 +22,7 @@ interface SocialProfileCardProps {
   selectedAccounts?: string[];
 }
 
-const SocialProfileCard: React.FC<SocialProfileCardProps> = ({ user, isVisible = true, selectedAccounts = [] }) => {
+const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(({ user, isVisible = true, selectedAccounts = [] }) => {
   const [showFullBio, setShowFullBio] = useState(false);
   const maxBioLength = 120;
   const shouldTruncate = user.bio.length > maxBioLength;
@@ -56,10 +55,13 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = ({ user, isVisible =
       <div className="flex items-start space-x-4">
         {/* Profile Photo - Square with subtle ring */}
         <div className="flex-shrink-0">
-          <img
+          <Image
             src={user.profilePhoto}
             alt={`${user.name}'s profile`}
+            width={80}
+            height={80}
             className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover ring-1 ring-white/15"
+            priority
           />
         </div>
 
@@ -86,14 +88,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = ({ user, isVisible =
                }}
              >
                {displayBio}
-               {shouldTruncate && !showFullBio && (
-                 <button
-                   onClick={handleMoreClick}
-                   className="text-blue-400 hover:text-blue-300 ml-1 font-medium align-baseline"
-                 >
-                   more
-                 </button>
-               )}
+
              </p>
            </div>
         </div>
@@ -115,7 +110,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = ({ user, isVisible =
                  alignItems: 'center',
                  justifyContent: 'center'
                }}>
-                 <FaInstagram className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'white' }} />
+                 <Instagram className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: 'white' }} />
                </div>
              </button>
            )}
@@ -166,7 +161,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = ({ user, isVisible =
              className="h-10 w-10 sm:h-12 sm:w-12 grid place-items-center rounded-md text-white hover:text-gray-300 transition-colors"
              aria-label="View Profile"
            >
-             <FaRegUser className="w-5 h-5 sm:w-6 sm:h-6" />
+             <User className="w-5 h-5 sm:w-6 sm:h-6" />
            </button>
 
            <button
@@ -180,6 +175,6 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = ({ user, isVisible =
        </div>
     </div>
   );
-};
+});
 
 export default SocialProfileCard;
