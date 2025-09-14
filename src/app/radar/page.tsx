@@ -72,12 +72,14 @@ const RadarScreen = () => {
             {/* Search Icon */}
             <svg 
               onClick={() => setSearchOpen(!searchOpen)}
-              className="w-6 h-6 text-gray-400 cursor-pointer hover:text-white transition-colors" 
+              className="w-6 h-6 text-white cursor-pointer hover:text-gray-300 transition-colors" 
               fill="none" 
               stroke="currentColor" 
+              strokeWidth="2.5"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
             </svg>
             
 
@@ -88,17 +90,17 @@ const RadarScreen = () => {
               className="w-6 h-6 cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center space-y-1"
             >
               <div 
-                className={`w-6 h-0.5 bg-gray-400 transition-all duration-300 ease-in-out ${
+                className={`w-6 h-0.5 bg-white transition-all duration-300 ease-in-out ${
                   dropdownOpen ? 'rotate-45 translate-y-1.5' : ''
                 }`}
               ></div>
               <div 
-                className={`w-6 h-0.5 bg-gray-400 transition-all duration-300 ease-in-out ${
+                className={`w-6 h-0.5 bg-white transition-all duration-300 ease-in-out ${
                   dropdownOpen ? 'opacity-0' : ''
                 }`}
               ></div>
               <div 
-                className={`w-6 h-0.5 bg-gray-400 transition-all duration-300 ease-in-out ${
+                className={`w-6 h-0.5 bg-white transition-all duration-300 ease-in-out ${
                   dropdownOpen ? '-rotate-45 -translate-y-1.5' : ''
                 }`}
               ></div>
@@ -106,8 +108,7 @@ const RadarScreen = () => {
           </div>
         </div>
         
-        {/* Gray separator line */}
-        <hr className="border-t border-gray-600 mb-6" />
+
         
         {/* Search Dropdown */}
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
@@ -134,7 +135,7 @@ const RadarScreen = () => {
         </div>
         
         {/* Nearby Users List */}
-        <div className="w-full max-w-2xl mx-auto">
+        <div className="w-full max-w-2xl mx-auto mt-4">
           {isVisible && nearbyUsers.map((user) => (
             <SocialProfileCard 
               key={user.id} 
