@@ -4,17 +4,18 @@ import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import SocialProfileCard from '@/components/SocialProfileCard';
 import VisibilityControl from '@/components/VisibilityControl';
+import { useVisibility } from '@/contexts/VisibilityContext';
 
 const RadarScreen = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(true);
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(['instagram', 'linkedin', 'twitter']);
+  const { isVisible, selectedAccounts, setIsVisible, setSelectedAccounts } = useVisibility();
   // Mock data for nearby users
   const nearbyUsers = [
     {
       id: '1',
       name: 'Alex Johnson',
+      username: 'alexjohnson',
       profilePhoto: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=b6e3f4',
       bio: 'Software engineer passionate about AI and machine learning. Love hiking and exploring new technologies. Always up for a good conversation about tech trends and innovation.',
       distance: '0.8 km',
@@ -27,6 +28,7 @@ const RadarScreen = () => {
     {
       id: '2',
       name: 'Sarah Chen',
+      username: 'sarahchen',
       profilePhoto: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=ffd5dc',
       bio: 'UX Designer creating beautiful and intuitive digital experiences. Coffee enthusiast and weekend photographer. Currently working on sustainable design practices.',
       distance: '1.2 km',
@@ -39,6 +41,7 @@ const RadarScreen = () => {
     {
       id: '3',
       name: 'Marcus Rodriguez',
+      username: 'marcusrodriguez',
       profilePhoto: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus&backgroundColor=c7d2fe',
       bio: 'Entrepreneur and startup founder. Building the next generation of fintech solutions. Mentor at local accelerator programs and angel investor.',
       distance: '1.5 km',
@@ -72,12 +75,12 @@ const RadarScreen = () => {
             {/* Search Icon */}
             <svg 
               onClick={() => setSearchOpen(!searchOpen)}
-              className="w-6 h-6 text-gray-400 cursor-pointer hover:text-white transition-colors" 
+              className="w-6 h-6 text-white cursor-pointer hover:text-gray-300 transition-colors" 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             
 
@@ -88,17 +91,17 @@ const RadarScreen = () => {
               className="w-6 h-6 cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center space-y-1"
             >
               <div 
-                className={`w-6 h-0.5 bg-gray-400 transition-all duration-300 ease-in-out ${
+                className={`w-6 h-0.5 bg-white transition-all duration-300 ease-in-out ${
                   dropdownOpen ? 'rotate-45 translate-y-1.5' : ''
                 }`}
               ></div>
               <div 
-                className={`w-6 h-0.5 bg-gray-400 transition-all duration-300 ease-in-out ${
+                className={`w-6 h-0.5 bg-white transition-all duration-300 ease-in-out ${
                   dropdownOpen ? 'opacity-0' : ''
                 }`}
               ></div>
               <div 
-                className={`w-6 h-0.5 bg-gray-400 transition-all duration-300 ease-in-out ${
+                className={`w-6 h-0.5 bg-white transition-all duration-300 ease-in-out ${
                   dropdownOpen ? '-rotate-45 -translate-y-1.5' : ''
                 }`}
               ></div>
@@ -127,10 +130,7 @@ const RadarScreen = () => {
         <div className={`overflow-hidden transition-all duration-300 ease-in-out w-full max-w-2xl mx-auto ${
           dropdownOpen ? 'max-h-96 opacity-100 mb-6' : 'max-h-0 opacity-0'
         }`}>
-          <VisibilityControl 
-            onVisibilityChange={(visible) => setIsVisible(visible)}
-            onAccountsChange={(accounts) => setSelectedAccounts(accounts)}
-          />
+          <VisibilityControl />
         </div>
         
         {/* Nearby Users List */}

@@ -1,20 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Eye, EyeOff, Slash, Instagram, Linkedin } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
+import { useVisibility } from '@/contexts/VisibilityContext';
 
-interface VisibilityControlProps {
-  onVisibilityChange?: (isVisible: boolean) => void;
-  onAccountsChange?: (selectedAccounts: string[]) => void;
-}
-
-const VisibilityControl: React.FC<VisibilityControlProps> = ({
-  onVisibilityChange,
-  onAccountsChange
-}) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(['instagram', 'linkedin', 'twitter']);
+const VisibilityControl: React.FC = () => {
+  const { isVisible, selectedAccounts, setIsVisible, setSelectedAccounts } = useVisibility();
 
   const socialAccounts = [
     {
@@ -38,9 +30,7 @@ const VisibilityControl: React.FC<VisibilityControlProps> = ({
   ];
 
   const handleVisibilityToggle = () => {
-    const newVisibility = !isVisible;
-    setIsVisible(newVisibility);
-    onVisibilityChange?.(newVisibility);
+    setIsVisible(!isVisible);
   };
 
   const handleAccountToggle = (accountId: string) => {
@@ -49,18 +39,15 @@ const VisibilityControl: React.FC<VisibilityControlProps> = ({
       : [...selectedAccounts, accountId];
     
     setSelectedAccounts(newSelectedAccounts);
-    onAccountsChange?.(newSelectedAccounts);
   };
 
   const handleDeselectAll = () => {
     setSelectedAccounts([]);
-    onAccountsChange?.([]);
   };
 
   const handleSelectAll = () => {
     const allAccountIds = socialAccounts.map(account => account.id);
     setSelectedAccounts(allAccountIds);
-    onAccountsChange?.(allAccountIds);
   };
 
   return (
@@ -133,15 +120,20 @@ const VisibilityControl: React.FC<VisibilityControlProps> = ({
                       background: isSelected ? account.gradient : '#4B5563',
                     }}
                   >
-                    <IconComponent 
-                      className={`w-5 h-5 ${
-                        account.id === 'instagram' || account.id === 'twitter' 
-                          ? 'text-white' 
-                          : account.id === 'linkedin' 
+                    {account.id === 'linkedin' ? (
+                      <svg className="w-5 h-5" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3z" fill="#0077B5"/>
+                        <path d="M135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z" fill="white"/>
+                      </svg>
+                    ) : (
+                      <IconComponent 
+                        className={`w-5 h-5 ${
+                          account.id === 'instagram' || account.id === 'twitter' 
                             ? 'text-white' 
                             : 'text-white'
-                      }`} 
-                    />
+                        }`} 
+                      />
+                    )}
                   </div>
                   
                   {/* Slash overlay for deselected accounts */}
