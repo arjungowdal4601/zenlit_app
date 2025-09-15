@@ -9,6 +9,7 @@ interface SocialProfileCardProps {
   user: {
     id: string;
     name: string;
+    username?: string;
     profilePhoto: string;
     bio: string;
     distance: string;
@@ -54,7 +55,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(({ user, 
       {/* Top: Avatar + Text */}
       <div className="flex items-start space-x-4">
         {/* Profile Photo - Square with subtle ring */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 mt-2">
           <Image
             src={user.profilePhoto}
             alt={`${user.name}'s profile`}
@@ -67,19 +68,22 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(({ user, 
 
         {/* Main Content */}
         <div className="flex-1 min-w-0">
-          {/* Name */}
+          {/* Name and Username */}
           <div className="mb-1 max-w-[210px] sm:max-w-[280px]">
-            <h3 className="text-gray-200 font-medium text-sm sm:text-base truncate" style={{ fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+            <h3 className="text-white font-semibold text-base sm:text-lg truncate" style={{ fontFamily: 'var(--font-inter)' }}>
               {user.name}
             </h3>
+            {user.username && (
+              <span className="text-gray-400 text-sm ml-1" style={{ fontFamily: 'var(--font-inter)' }}>@{user.username}</span>
+            )}
           </div>
 
           {/* Bio - Flexible width extending to card end */}
            <div className="flex-1 pr-2">
              <p
-               className="text-gray-400 text-xs leading-tight overflow-hidden font-bold"
+               className="text-white text-sm leading-tight overflow-hidden"
                style={{
-                 fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                 fontFamily: 'var(--font-inter)',
                  display: '-webkit-box',
                  WebkitLineClamp: 2,
                  WebkitBoxOrient: 'vertical',

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
 import Post from '@/components/Post';
+import { useVisibility } from '@/contexts/VisibilityContext';
 
 // Sample posts data
 const samplePosts = [
@@ -96,7 +97,7 @@ const samplePosts = [
 ];
 
 const FeedScreen = () => {
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(['instagram', 'linkedin', 'twitter']);
+  const { selectedAccounts } = useVisibility();
 
   return (
     <AppLayout>
