@@ -118,7 +118,7 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = ['instagra
           {/* Author Info */}
           <div className="mb-2">
             <h3 className="text-white font-semibold text-base">{author.name}</h3>
-            <span className="text-gray-400 text-sm ml-2">@{author.username}</span>
+            <span className="text-gray-400 text-sm">@{author.username}</span>
           </div>
           
           {/* Post Text */}
