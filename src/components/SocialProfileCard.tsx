@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { MessageSquare, User, MessageCircle, Instagram, Linkedin } from 'lucide-react';
+import { MessageSquare, User, Instagram } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 
 interface SocialProfileCardProps {
@@ -19,12 +19,11 @@ interface SocialProfileCardProps {
       twitter?: string;
     };
   };
-  isVisible?: boolean;
   selectedAccounts?: string[];
 }
 
-const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(({ user, isVisible = true, selectedAccounts = [] }) => {
-  const [showFullBio, setShowFullBio] = useState(false);
+const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function SocialProfileCardComponent({ user, selectedAccounts = [] }) {
+  const [showFullBio] = useState(false);
   const maxBioLength = 120;
   const shouldTruncate = user.bio.length > maxBioLength;
   const displayBio = shouldTruncate && !showFullBio 
@@ -46,22 +45,20 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(({ user, 
     console.log('Navigate to chat window');
   };
 
-  const handleMoreClick = () => {
-    handleProfileClick();
-  };
+  // Additional interactions can be added here (e.g., expand bio)
 
   return (
     <div className="bg-black rounded-xl p-3 mb-4 transition-all duration-300" style={{boxShadow: '4px 4px 8px rgba(255, 255, 255, 0.2), -2px -2px 4px rgba(255, 255, 255, 0.1)'}}>
       {/* Top: Avatar + Text */}
       <div className="flex items-start space-x-4">
-        {/* Profile Photo - Square with subtle ring */}
+        {/* Profile Photo - Feed-style avatar */}
         <div className="flex-shrink-0 mt-2">
           <Image
             src={user.profilePhoto}
             alt={`${user.name}'s profile`}
-            width={80}
-            height={80}
-            className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl object-cover ring-1 ring-white/15"
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-lg object-cover"
             priority
           />
         </div>

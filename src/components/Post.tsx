@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { Instagram, Linkedin } from 'lucide-react';
+import { Instagram } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 
 interface PostProps {
@@ -22,20 +22,7 @@ interface PostProps {
   selectedAccounts?: string[];
 }
 
-// Avatar color combinations inspired by the radar page
-const avatarColors = [
-  'bg-gradient-to-br from-orange-400 to-red-500',
-  'bg-gradient-to-br from-blue-400 to-indigo-600', 
-  'bg-gradient-to-br from-green-400 to-emerald-600',
-  'bg-gradient-to-br from-purple-400 to-pink-600',
-  'bg-gradient-to-br from-yellow-400 to-orange-500',
-  'bg-gradient-to-br from-cyan-400 to-blue-600',
-];
-
 const Post = ({ author, content, image, timestamp, selectedAccounts = ['instagram', 'linkedin', 'twitter'] }: PostProps) => {
-  // Generate consistent color based on author name
-  const colorIndex = author.name.charCodeAt(0) % avatarColors.length;
-  const avatarColor = avatarColors[colorIndex];
 
   const handleSocialClick = (platform: string) => {
     console.log(`Navigate to ${platform}`);
@@ -106,9 +93,11 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = ['instagra
       <div className="flex space-x-4">
         {/* Enhanced Avatar */}
         <div className="flex-shrink-0">
-          <img 
+          <Image
             src={author.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name)}&background=random&color=fff&size=40`}
             alt={author.name}
+            width={40}
+            height={40}
             className="w-10 h-10 rounded-lg object-cover"
           />
         </div>
@@ -118,7 +107,7 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = ['instagra
           {/* Author Info */}
           <div className="mb-2">
             <h3 className="text-white font-semibold text-base">{author.name}</h3>
-            <span className="text-gray-400 text-sm">@{author.username}</span>
+            <span className="text-gray-400 text-sm">@{author.username} · {timestamp}</span>
           </div>
           
           {/* Post Text */}

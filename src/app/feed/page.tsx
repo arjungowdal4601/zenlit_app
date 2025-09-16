@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import AppLayout from '@/components/AppLayout';
+import AppHeader from '@/components/AppHeader';
 import Post from '@/components/Post';
 import { useVisibility } from '@/contexts/VisibilityContext';
 
@@ -15,10 +15,11 @@ const samplePosts = [
       socialLinks: {
         instagram: 'alexj_dev',
         linkedin: 'alex-johnson-dev',
-        twitter: 'alexjohnson_ai'
-      }
+        twitter: 'alexjohnson_ai',
+      },
     },
-    content: 'Just finished reading an amazing book on machine learning! The concepts around neural networks are fascinating. Anyone else diving into AI lately? 🤖',
+    content:
+      'Just finished reading an amazing book on machine learning! The concepts around neural networks are fascinating. Anyone else diving into AI lately? 🤖📚',
     timestamp: '2h',
   },
   {
@@ -29,10 +30,11 @@ const samplePosts = [
       socialLinks: {
         instagram: 'sarahchen_design',
         linkedin: 'sarah-chen-ux',
-        twitter: 'sarahdesigns'
-      }
+        twitter: 'sarahdesigns',
+      },
     },
-    content: 'Beautiful sunset from my balcony today. Sometimes you need to pause and appreciate the simple moments in life.',
+    content:
+      'Beautiful sunset from my balcony today. Sometimes you need to pause and appreciate the simple moments in life.',
     image: '/next.svg', // Using existing asset as placeholder
     timestamp: '4h',
   },
@@ -44,10 +46,11 @@ const samplePosts = [
       socialLinks: {
         instagram: 'marcus_startup',
         linkedin: 'marcus-rodriguez-ceo',
-        twitter: 'marcusfintech'
-      }
+        twitter: 'marcusfintech',
+      },
     },
-    content: 'Working on a new React project and loving the new features in Next.js 14. The app directory structure makes everything so much cleaner!',
+    content:
+      'Working on a new React project and loving the new features in Next.js 14. The app directory structure makes everything so much cleaner!',
     timestamp: '6h',
   },
   {
@@ -58,10 +61,11 @@ const samplePosts = [
       socialLinks: {
         instagram: 'emmaw_coffee',
         linkedin: 'emma-wilson-dev',
-        twitter: 'emmawilson_code'
-      }
+        twitter: 'emmawilson_code',
+      },
     },
-    content: 'Coffee shop vibes today ☕ Perfect place to get some coding done. What\'s your favorite place to work from?',
+    content:
+      "Coffee shop vibes today ☕️ Perfect place to get some coding done. What's your favorite place to work from?",
     image: '/vercel.svg', // Using existing asset as placeholder
     timestamp: '8h',
   },
@@ -73,10 +77,11 @@ const samplePosts = [
       socialLinks: {
         instagram: 'davidk_fullstack',
         linkedin: 'david-kim-developer',
-        twitter: 'davidkim_dev'
-      }
+        twitter: 'davidkim_dev',
+      },
     },
-    content: 'Just deployed my first full-stack application! The feeling of seeing your code come to life is unmatched. Onto the next challenge! 🚀',
+    content:
+      'Just deployed my first full-stack application! The feeling of seeing your code come to life is unmatched. Onto the next challenge! 🚀',
     timestamp: '12h',
   },
   {
@@ -87,10 +92,11 @@ const samplePosts = [
       socialLinks: {
         instagram: 'lisat_nature',
         linkedin: 'lisa-thompson-explorer',
-        twitter: 'lisathompson_hike'
-      }
+        twitter: 'lisathompson_hike',
+      },
     },
-    content: 'Exploring the mountains this weekend. Nature has a way of clearing your mind and sparking creativity.',
+    content:
+      'Exploring the mountains this weekend. Nature has a way of clearing your mind and sparking creativity.',
     image: '/globe.svg', // Using existing asset as placeholder
     timestamp: '1d',
   },
@@ -103,13 +109,8 @@ const FeedScreen = () => {
     <AppLayout>
       <div className="min-h-screen bg-black">
         <div className="max-w-2xl mx-auto px-4">
-          {/* Header - matching radar page style */}
-          <div className="sticky top-0 bg-black/90 backdrop-blur-md border-b border-gray-800 py-4 mb-6 z-10">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-medium bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-inter">
-              Feed
-            </h1>
-          </div>
-          
+          <AppHeader title="Feed" />
+
           {/* Posts - card-based layout */}
           <div className="pb-8">
             {samplePosts.map((post) => (
@@ -131,3 +132,4 @@ const FeedScreen = () => {
 };
 
 export default FeedScreen;
+
