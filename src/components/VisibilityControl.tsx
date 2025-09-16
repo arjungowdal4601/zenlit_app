@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Eye, EyeOff, Slash, Instagram, Linkedin } from 'lucide-react';
+import { Slash, Instagram, Linkedin } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 import { useVisibility } from '@/contexts/VisibilityContext';
 
