@@ -1,24 +1,18 @@
-'use client';
+import AppHeader from "@/components/AppHeader";
+import AppLayout from "@/components/AppLayout";
+import ChatList, { anonymousSeedChats, normalSeedChats } from "@/components/messaging/ChatList";
 
-import AppLayout from '@/components/AppLayout';
-import AppHeader from '@/components/AppHeader';
+export const dynamic = "force-dynamic";
 
-const MessagesScreen = () => {
+export default function MessagesPage() {
   return (
     <AppLayout>
-      <div className="min-h-screen bg-black">
-        <div className="max-w-2xl mx-auto px-4">
-          <AppHeader title="Messages" />
-          <div className="flex items-center justify-center py-16">
-            <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-light text-white mb-4">Coming Soon</h2>
-              <p className="text-gray-400 text-lg">Messages feature is under development</p>
-            </div>
-          </div>
+      <div className="max-w-2xl mx-auto px-4" style={{ fontFamily: 'var(--font-inter)' }}>
+        <AppHeader title="Messages" />
+        <div className="py-2">
+          <ChatList normalChats={normalSeedChats} anonymousChats={anonymousSeedChats} />
         </div>
       </div>
     </AppLayout>
   );
-};
-
-export default MessagesScreen;
+}
