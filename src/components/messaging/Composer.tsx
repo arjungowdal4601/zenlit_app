@@ -50,7 +50,6 @@ const Composer = ({ onSend, value, onChange }: Props) => {
               placeholder="Message"
               value={val}
               onChange={(e) => handleChange(e.target.value)}
-              style={{ fontFamily: 'var(--font-inter)' }}
             />
           </div>
           <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Attach">

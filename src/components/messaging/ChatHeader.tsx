@@ -31,7 +31,7 @@ const ChatHeader = ({ title, subtitle, avatarUrl, anonymous }: Props) => {
                 )
               )}
             </div>
-            <div className="leading-tight" style={{ fontFamily: 'var(--font-inter)' }}>
+            <div className="leading-tight">
               <div className="text-sm font-medium text-white">{anonymous ? 'Anonymous' : title}</div>
               {subtitle && <div className="text-xs text-gray-400">{subtitle}</div>}
             </div>
