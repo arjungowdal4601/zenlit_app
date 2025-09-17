@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Plus, Pin, PinOff, Volume2, VolumeX, Trash2, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import ChatListItem from "./ChatListItem";
 import EmptyState from "./EmptyState";
 import SkeletonRows from "./Skeletons";
@@ -147,7 +147,6 @@ interface ChatListProps {
 }
 
 const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<{ normals: Chat[]; anons: Chat[] }>({ normals: normalChats, anons: anonymousChats });
 
@@ -157,19 +156,12 @@ const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
   }, []);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const filterFn = (c: Chat) =>
-      q.length === 0 ||
-      (c.title?.toLowerCase().includes(q) ?? false) ||
-      c.last.toLowerCase().includes(q);
-
     const normals = items.normals
-      .filter(filterFn)
       .sort((a, b) => Number(b.pinned) - Number(a.pinned));
 
-    const anons = items.anons.filter(filterFn);
+    const anons = items.anons;
     return { normals, anons };
-  }, [query, items]);
+  }, [items]);
 
   const handleToggle = (id: string, key: "pinned" | "muted") => {
     setItems((prev) => ({
@@ -187,24 +179,6 @@ const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
 
   return (
     <div className="pb-24" style={{ fontFamily: "var(--font-inter)" }}>
-      {/* Search + Actions */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-2xl px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
-            <Search size={18} className="text-gray-400" />
-            <input
-              aria-label="Search chats"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search"
-              className="w-full bg-transparent outline-none text-sm text-white placeholder-gray-400"
-            />
-          </div>
-        </div>
-        <Link href="#" className="hidden sm:inline-flex items-center gap-2 text-sm text-gray-200 px-3 h-10 rounded-xl border border-slate-700 hover:bg-slate-800/50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <Plus size={16} /> New
-        </Link>
-      </div>
 
       {loading ? (
         <SkeletonRows count={7} />
@@ -220,9 +194,6 @@ const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
                   key={chat.id}
                   chat={chat}
                   isAnonymous={false}
-                  onTogglePin={() => handleToggle(chat.id, "pinned")}
-                  onToggleMute={() => handleToggle(chat.id, "muted")}
-                  onDelete={() => handleDelete(chat.id)}
                 />
               ))
             )}
@@ -247,9 +218,6 @@ const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
                   key={chat.id}
                   chat={chat}
                   isAnonymous
-                  onTogglePin={() => handleToggle(chat.id, "pinned")}
-                  onToggleMute={() => handleToggle(chat.id, "muted")}
-                  onDelete={() => handleDelete(chat.id)}
                 />
               ))
             )}

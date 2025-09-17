@@ -1,6 +1,6 @@
 "use client";
 
-import { Paperclip, Smile, Mic, Send } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
@@ -39,12 +39,9 @@ const Composer = ({ onSend, value, onChange }: Props) => {
   };
 
   return (
-    <div className="sticky bottom-0 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60 border-t border-slate-800">
+    <div className="sticky bottom-0 z-50 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60 border-t border-slate-800">
       <div className="max-w-2xl mx-auto px-4 py-3">
         <div className="flex items-end gap-2">
-          <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Emoji">
-            <Smile className="text-gray-200" size={20} />
-          </button>
           <div className="flex-1 min-h-[40px] bg-slate-900 rounded-2xl px-3 py-2 border border-slate-800">
             <textarea
               ref={taRef}
@@ -58,9 +55,6 @@ const Composer = ({ onSend, value, onChange }: Props) => {
           </div>
           <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Attach">
             <Paperclip className="text-gray-200" size={20} />
-          </button>
-          <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Mic">
-            <Mic className="text-gray-200" size={20} />
           </button>
           <button onClick={handleSend} disabled={!canSend} className={`h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${canSend ? 'bg-blue-600 hover:bg-blue-500' : 'bg-slate-800 cursor-not-allowed'}`} aria-label="Send">
             <Send size={18} className="text-white" />

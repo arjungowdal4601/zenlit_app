@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect, use } from "react";
-import AppLayout from "@/components/AppLayout";
-import ChatHeader from "@/components/messaging/ChatHeader";
-import MessageBubble from "@/components/messaging/MessageBubble";
-import Composer from "@/components/messaging/Composer";
-import DayDivider from "@/components/messaging/DayDivider";
-import { Chat, getMessagesForChat, groupByDay, normalSeedChats, anonymousSeedChats, seedMessages, Message } from "@/components/messaging/ChatList";
+import { use, useState, useEffect, useMemo, useRef } from 'react';
+import ChatHeader from '@/components/messaging/ChatHeader';
+import MessageBubble from '@/components/messaging/MessageBubble';
+import Composer from '@/components/messaging/Composer';
+import DayDivider from '@/components/messaging/DayDivider';
+import AppLayout from '@/components/AppLayout';
+import { Chat, normalSeedChats, anonymousSeedChats, groupByDay, Message, getMessagesForChat, MsgType } from '@/components/messaging/ChatList';
 
 interface Params { params: Promise<{ chatId: string }> }
 
@@ -69,16 +69,16 @@ export default function ChatScreen({ params }: Params) {
   const draft = drafts[chatId] ?? '';
 
   return (
-    <AppLayout>
-      <div className="min-h-screen bg-black">
-        <ChatHeader
-          title={chat.title ?? 'Anonymous'}
-          subtitle={isAnonymous ? 'Read-only' : (typing ? 'typing…' : 'online')}
-          avatarUrl={chat.avatar}
-          anonymous={isAnonymous}
-        />
+    <div className="chat-container bg-black text-white">
+      <ChatHeader
+        title={chat.title ?? 'Anonymous'}
+        subtitle={isAnonymous ? 'Read-only' : (typing ? 'typing…' : 'online')}
+        avatarUrl={chat.avatar}
+        anonymous={isAnonymous}
+      />
 
-        <div className="max-w-2xl mx-auto px-4">
+      <div className="chat-content">
+        <div className="max-w-2xl mx-auto px-4 pt-4">
           {/* Read-only banner for anonymous */}
           {isAnonymous && (
             <div className="mt-3 mb-2 text-center text-xs text-gray-400 border border-slate-800 rounded-xl py-2" style={{ fontFamily: 'var(--font-inter)' }}>
@@ -86,7 +86,7 @@ export default function ChatScreen({ params }: Params) {
             </div>
           )}
 
-          <div ref={viewportRef} className="h-[calc(100vh-160px)] overflow-y-auto pb-24 pt-4 flex flex-col gap-2">
+          <div ref={viewportRef} className="pb-4 pt-2 flex flex-col gap-2">
             {grouped.map(group => (
               <div key={group.label} className="flex flex-col gap-2">
                 <DayDivider label={group.label} />
@@ -100,22 +100,33 @@ export default function ChatScreen({ params }: Params) {
               <div className="self-start bg-slate-900 rounded-2xl rounded-tl-md px-3 py-2">
                 <div className="flex gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse delay-150" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse delay-300" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "0.2s" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" style={{ animationDelay: "0.4s" }} />
                 </div>
               </div>
             )}
           </div>
         </div>
-
-        {!isAnonymous && (
-          <Composer
-            onSend={handleSend}
-            value={draft}
-            onChange={(v) => setDrafts(prev => ({ ...prev, [chatId]: v }))}
-          />
-        )}
       </div>
-    </AppLayout>
+
+      {!isAnonymous && (
+        <Composer
+          value={draft}
+          onChange={(v) => setDrafts(prev => ({ ...prev, [chatId]: v }))}
+          onSend={(text) => {
+            const newMessage: Message = {
+              id: `msg-${Date.now()}`,
+              text,
+              senderId: 'me',
+              chatId: chatId,
+              type: 'text' as MsgType,
+              createdAt: new Date().toISOString(),
+            };
+            setMessages(prev => [...prev, newMessage]);
+            setDrafts(prev => ({ ...prev, [chatId]: '' }));
+          }}
+        />
+      )}
+    </div>
   );
 }

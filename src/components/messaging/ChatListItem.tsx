@@ -2,18 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Pin, PinOff, Volume2, VolumeX, Trash2, ChevronRight, Eye } from "lucide-react";
+import { ChevronRight, Eye } from "lucide-react";
 import { Chat } from "./ChatList";
 
 interface Props {
   chat: Chat;
   isAnonymous?: boolean;
-  onTogglePin: () => void;
-  onToggleMute: () => void;
-  onDelete: () => void;
 }
 
-const ChatListItem = ({ chat, isAnonymous, onTogglePin, onToggleMute, onDelete }: Props) => {
+const ChatListItem = ({ chat, isAnonymous }: Props) => {
   const href = `/messages/${chat.id}`;
 
   return (
@@ -52,19 +49,6 @@ const ChatListItem = ({ chat, isAnonymous, onTogglePin, onToggleMute, onDelete }
 
         <ChevronRight size={18} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
       </Link>
-
-      {/* Row actions */}
-      <div className="absolute inset-y-0 right-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={(e) => { e.preventDefault(); onTogglePin(); }} title={chat.pinned ? 'Unpin' : 'Pin'} className="p-2 rounded-lg hover:bg-slate-800 text-gray-300">
-          {chat.pinned ? <PinOff size={16} /> : <Pin size={16} />}
-        </button>
-        <button onClick={(e) => { e.preventDefault(); onToggleMute(); }} title={chat.muted ? 'Unmute' : 'Mute'} className="p-2 rounded-lg hover:bg-slate-800 text-gray-300">
-          {chat.muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-        </button>
-        <button onClick={(e) => { e.preventDefault(); onDelete(); }} title="Delete" className="p-2 rounded-lg hover:bg-slate-800 text-gray-300">
-          <Trash2 size={16} />
-        </button>
-      </div>
     </div>
   );
 };
