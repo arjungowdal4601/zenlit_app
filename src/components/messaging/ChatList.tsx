@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 import ChatListItem from "./ChatListItem";
@@ -162,20 +161,6 @@ const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
     const anons = items.anons;
     return { normals, anons };
   }, [items]);
-
-  const handleToggle = (id: string, key: "pinned" | "muted") => {
-    setItems((prev) => ({
-      ...prev,
-      normals: prev.normals.map((c) => (c.id === id ? { ...c, [key]: !c[key] } : c)),
-    }));
-  };
-
-  const handleDelete = (id: string) => {
-    setItems((prev) => ({
-      normals: prev.normals.filter((c) => c.id !== id),
-      anons: prev.anons.filter((c) => c.id !== id),
-    }));
-  };
 
   return (
     <div className="pb-24" style={{ fontFamily: "var(--font-inter)" }}>
