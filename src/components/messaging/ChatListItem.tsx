@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Eye } from "lucide-react";
-import { Chat } from "./ChatList";
+import type { Chat } from "./data";
 
 interface Props {
   chat: Chat;
@@ -32,7 +32,7 @@ const ChatListItem = ({ chat, isAnonymous }: Props) => {
         {/* Main */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <div className="truncate text-sm font-medium text-white" style={{ fontFamily: 'var(--font-inter)' }}>
+            <div className="truncate text-sm font-medium text-white">
               {isAnonymous ? 'Anonymous chat' : (chat.title ?? 'Untitled')}
             </div>
             <div className="ml-2 text-xs text-gray-400 shrink-0">{chat.time}</div>

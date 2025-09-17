@@ -15,8 +15,7 @@ const AppHeader = ({ title, right }: AppHeaderProps) => {
             backgroundImage: 'linear-gradient(to right, #2563eb, #7e22ce)',
             WebkitBackgroundClip: 'text',
             backgroundClip: 'text',
-            color: 'transparent',
-            fontFamily: 'var(--font-inter)'
+            color: 'transparent'
           }}
         >
           {title}

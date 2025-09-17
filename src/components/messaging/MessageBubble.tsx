@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Check, CheckCheck } from "lucide-react";
-import { Message } from "./ChatList";
+import type { Message } from "./data";
 
 interface Props {
   message: Message;
@@ -29,7 +29,7 @@ const MessageBubble = ({ message, isMe, repliedTo }: Props) => {
             </div>
           )}
           {message.type === 'text' && (
-            <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ fontFamily: 'var(--font-inter)' }}>{message.text}</div>
+            <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</div>
           )}
           {message.type === 'image' && message.mediaUrl && (
             <button className="block overflow-hidden rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
