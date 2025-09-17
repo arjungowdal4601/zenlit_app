@@ -44,27 +44,13 @@ export default function ChatScreen({ params }: Params) {
     el.scrollTop = el.scrollHeight;
   }, [messages]);
 
+  const grouped = useMemo(() => groupByDay(messages), [messages]);
+
   if (!chat) return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-10 text-gray-300">Chat not found.</div>
     </AppLayout>
   );
-
-  const grouped = useMemo(() => groupByDay(messages), [messages]);
-
-  const handleSend = (text: string) => {
-    const newMsg: Message = {
-      id: `m_${Date.now()}`,
-      chatId: chatId,
-      senderId: 'me',
-      type: 'text',
-      text,
-      createdAt: new Date().toISOString(),
-      status: 'sent'
-    };
-    setMessages(prev => [...prev, newMsg]);
-    setDrafts(prev => ({ ...prev, [chatId]: '' }));
-  };
 
   const draft = drafts[chatId] ?? '';
 
