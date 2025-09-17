@@ -25,7 +25,6 @@ const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
     const timer = window.setTimeout(() => setLoading(false), 350);
     return () => window.clearTimeout(timer);
   }, []);
-
   const sorted = useMemo(() => ({
     normals: [...chats.normals].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))),
     anons: [...chats.anons],
