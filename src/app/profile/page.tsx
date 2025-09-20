@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
+import LogoutConfirmation from '@/components/LogoutConfirmation';
 import Image from 'next/image';
 import { Instagram, MoreHorizontal, Edit, MessageSquare, LogOut } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
@@ -16,8 +18,10 @@ interface Post {
 }
 
 const ProfileScreen = () => {
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [postMenuOpen, setPostMenuOpen] = useState<string | null>(null);
   const [posts, setPosts] = useState<Post[]>([
@@ -114,7 +118,15 @@ const ProfileScreen = () => {
   };
 
   const handleMenuAction = (action: string) => {
-    console.log(`${action} clicked`);
+    if (action === 'Logout') {
+      setLogoutModalOpen(true);
+    } else if (action === 'Give Feedback') {
+      router.push('/feedback');
+    } else if (action === 'Edit Profile') {
+      router.push('/edit-profile');
+    } else {
+      console.log(`${action} clicked`);
+    }
     setDropdownOpen(false);
   };
 
@@ -402,6 +414,12 @@ const ProfileScreen = () => {
           </div>
         )}
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmation 
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+      />
     </AppLayout>
   );
 };
