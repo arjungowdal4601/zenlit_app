@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 import { Instagram } from 'lucide-react';
 import { FaXTwitter } from 'react-icons/fa6';
 
@@ -6,7 +6,7 @@ export type SocialPlatformId = 'instagram' | 'linkedin' | 'twitter';
 
 export type SocialLinks = Partial<Record<SocialPlatformId, string>>;
 
-type IconRenderer = (className?: string) => JSX.Element;
+type IconRenderer = (className?: string) => ReactElement;
 
 interface SocialPlatformMeta {
   id: SocialPlatformId;
