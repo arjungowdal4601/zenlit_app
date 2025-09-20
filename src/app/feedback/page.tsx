@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
-import { ArrowLeft, Upload, X, Check } from 'lucide-react';
+import { ArrowLeft, Upload, X, Check, Paperclip } from 'lucide-react';
 
 const FeedbackPage = () => {
   const router = useRouter();
@@ -132,6 +132,33 @@ const FeedbackPage = () => {
                 Help us improve Zenlit by sharing your thoughts and suggestions
               </p>
             </div>
+
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full max-h-64 object-cover rounded-xl border-2 border-white"
+                />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute top-2 right-2 p-1 bg-black bg-opacity-70 rounded-full hover:bg-opacity-90 transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            )}
+
+            {/* Hidden File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
           </div>
 
           {/* Success Message */}
@@ -148,13 +175,25 @@ const FeedbackPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6 pb-8">
             {/* Feedback Text Input */}
             <div>
-              <label 
-                htmlFor="feedback-text"
-                className="block text-white font-medium mb-3"
-                style={{ fontFamily: 'var(--font-inter)' }}
-              >
-                Your Feedback <span className="text-red-400">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-3">
+                <label 
+                  htmlFor="feedback-text"
+                  className="block text-white font-medium"
+                  style={{ fontFamily: 'var(--font-inter)' }}
+                >
+                  Your Feedback <span className="text-red-400">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  title="Attach image"
+                  style={{ fontFamily: 'var(--font-inter)' }}
+                >
+                  <Paperclip className="w-4 h-4" />
+                  <span className="text-sm font-medium">Attach</span>
+                </button>
+              </div>
               <textarea
                 id="feedback-text"
                 value={feedbackText}
@@ -166,10 +205,10 @@ const FeedbackPage = () => {
                 }}
                 placeholder="Tell us what you think about Zenlit. What features do you love? What could be improved? Any bugs or issues you've encountered?"
                 rows={6}
-                className={`w-full bg-gray-900 border rounded-xl px-4 py-3 text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 transition-colors ${
+                className={`w-full bg-black border-2 border-white rounded-xl px-4 py-3 text-gray-400 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 transition-colors ${
                   errors.feedbackText 
                     ? 'border-red-500 focus:ring-red-500' 
-                    : 'border-gray-600 focus:ring-blue-500'
+                    : 'border-white focus:ring-white'
                 }`}
                 style={{ fontFamily: 'var(--font-inter)' }}
                 maxLength={1000}
@@ -184,50 +223,7 @@ const FeedbackPage = () => {
               </p>
             </div>
 
-            {/* Image Attachment */}
-            <div>
-              <label className="block text-white font-medium mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
-                Attach Image (Optional)
-              </label>
-              
-              {!imagePreview ? (
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-gray-500 transition-colors"
-                >
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-300 mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
-                    Click to upload an image
-                  </p>
-                  <p className="text-gray-500 text-sm" style={{ fontFamily: 'var(--font-inter)' }}>
-                    PNG, JPG, GIF up to 5MB
-                  </p>
-                </div>
-              ) : (
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full max-h-64 object-cover rounded-xl"
-                  />
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="absolute top-2 right-2 p-1 bg-black bg-opacity-70 rounded-full hover:bg-opacity-90 transition-colors"
-                  >
-                    <X className="w-4 h-4 text-white" />
-                  </button>
-                </div>
-              )}
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-            </div>
+
 
             {/* Submit Button */}
             <button

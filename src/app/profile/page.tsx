@@ -122,6 +122,8 @@ const ProfileScreen = () => {
       setLogoutModalOpen(true);
     } else if (action === 'Give Feedback') {
       router.push('/feedback');
+    } else if (action === 'Edit Profile') {
+      router.push('/edit-profile');
     } else {
       console.log(`${action} clicked`);
     }

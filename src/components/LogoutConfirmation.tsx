@@ -30,8 +30,7 @@ const LogoutConfirmation: React.FC<LogoutConfirmationProps> = ({ isOpen, onClose
         </button>
         
         {/* Modal content */}
-        <h2 className="text-xl font-semibold text-white mb-4" style={{ fontFamily: 'var(--font-inter)' }}>Logout</h2>
-        <p className="text-gray-300 mb-6" style={{ fontFamily: 'var(--font-inter)' }}>Are you sure you want to logout?</p>
+        <p className="text-gray-300 mb-6 text-center" style={{ fontFamily: 'var(--font-inter)' }}>Are you sure you want to log out?</p>
         
         {/* Action buttons */}
         <div className="flex space-x-3">
