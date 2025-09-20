@@ -15,20 +15,19 @@ interface ChatListProps {
 
 const ChatList = ({ normalChats, anonymousChats }: ChatListProps) => {
   const [loading, setLoading] = useState(true);
-  const [chats, setChats] = useState({ normals: normalChats, anons: anonymousChats });
-
-  useEffect(() => {
-    setChats({ normals: normalChats, anons: anonymousChats });
-  }, [normalChats, anonymousChats]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setLoading(false), 350);
     return () => window.clearTimeout(timer);
   }, []);
-  const sorted = useMemo(() => ({
-    normals: [...chats.normals].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))),
-    anons: [...chats.anons],
-  }), [chats]);
+
+  const sorted = useMemo(
+    () => ({
+      normals: [...normalChats].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned))),
+      anons: [...anonymousChats],
+    }),
+    [normalChats, anonymousChats],
+  );
 
   if (loading) {
     return <div className="pb-24"><SkeletonRows count={7} /></div>;

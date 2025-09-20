@@ -1,12 +1,14 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
+import { DEFAULT_VISIBLE_PLATFORMS, type SocialPlatformId } from '@/constants/socialPlatforms';
 
 interface VisibilityContextType {
   isVisible: boolean;
-  selectedAccounts: string[];
-  setIsVisible: (visible: boolean) => void;
-  setSelectedAccounts: (accounts: string[]) => void;
+  selectedAccounts: SocialPlatformId[];
+  setIsVisible: Dispatch<SetStateAction<boolean>>;
+  setSelectedAccounts: Dispatch<SetStateAction<SocialPlatformId[]>>;
 }
 
 const VisibilityContext = createContext<VisibilityContextType | undefined>(undefined);
@@ -23,16 +25,19 @@ interface VisibilityProviderProps {
   children: ReactNode;
 }
 
-export const VisibilityProvider: React.FC<VisibilityProviderProps> = ({ children }) => {
+export const VisibilityProvider = ({ children }: VisibilityProviderProps) => {
   const [isVisible, setIsVisible] = useState(true);
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>(['instagram', 'linkedin', 'twitter']);
+  const [selectedAccounts, setSelectedAccounts] = useState<SocialPlatformId[]>(() => [...DEFAULT_VISIBLE_PLATFORMS]);
 
-  const value = {
-    isVisible,
-    selectedAccounts,
-    setIsVisible,
-    setSelectedAccounts,
-  };
+  const value = useMemo(
+    () => ({
+      isVisible,
+      selectedAccounts,
+      setIsVisible,
+      setSelectedAccounts,
+    }),
+    [isVisible, selectedAccounts],
+  );
 
   return (
     <VisibilityContext.Provider value={value}>
