@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import LogoutConfirmation from '@/components/LogoutConfirmation';
+import SocialLinkButton from '@/components/SocialLinkButton';
 import Image from 'next/image';
-import { Instagram, MoreHorizontal, Edit, MessageSquare, LogOut } from 'lucide-react';
-import { FaXTwitter } from 'react-icons/fa6';
+import { MoreHorizontal, Edit, MessageSquare, LogOut } from 'lucide-react';
 
 interface Post {
   id: string;
@@ -249,58 +249,37 @@ const ProfileScreen = () => {
                 {/* Right Side: Social Links */}
                 <div className="flex items-center space-x-3 pt-2">
                   {user.socialLinks?.instagram && (
-                    <button
+                    <SocialLinkButton
+                      platform="instagram"
                       onClick={() => console.log('Instagram clicked')}
-                      className="p-0 hover:scale-110 transition-transform"
-                      aria-label="Instagram"
-                    >
-                      <div className="w-8 h-8 rounded-lg" style={{
-                        background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <Instagram className="w-5 h-5" style={{ color: 'white' }} />
-                      </div>
-                    </button>
+                      buttonClassName="hover:scale-110"
+                      containerClassName="w-8 h-8"
+                      iconClassName="w-5 h-5"
+                      ariaLabel="Instagram"
+                    />
                   )}
 
                   {user.socialLinks?.linkedin && (
-                    <button
+                    <SocialLinkButton
+                      platform="linkedin"
                       onClick={() => console.log('LinkedIn clicked')}
-                      className="p-0 hover:scale-110 transition-transform"
-                      aria-label="LinkedIn"
-                    >
-                      <div className="w-8 h-8 rounded-sm" style={{
-                        background: '#0077B5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <svg className="w-5 h-5" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3z" fill="#0077B5"/>
-                          <path d="M135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z" fill="white"/>
-                        </svg>
-                      </div>
-                    </button>
+                      buttonClassName="hover:scale-110"
+                      containerClassName="w-8 h-8"
+                      iconClassName="w-5 h-5"
+                      ariaLabel="LinkedIn"
+                    />
                   )}
 
                   {user.socialLinks?.twitter && (
-                    <button
+                    <SocialLinkButton
+                      platform="twitter"
                       onClick={() => console.log('Twitter clicked')}
-                      className="p-0 hover:scale-110 transition-transform"
-                      aria-label="X (Twitter)"
-                    >
-                      <div className="w-8 h-8 rounded-sm" style={{
-                        background: '#000000',
-                        border: '1px solid #333',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <FaXTwitter className="w-4 h-4" style={{ color: 'white' }} />
-                      </div>
-                    </button>
+                      buttonClassName="hover:scale-110"
+                      containerClassName="w-8 h-8"
+                      iconClassName="w-4 h-4"
+                      containerStyle={{ border: '1px solid #333' }}
+                      ariaLabel="X (Twitter)"
+                    />
                   )}
                 </div>
               </div>
