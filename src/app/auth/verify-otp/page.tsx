@@ -1,33 +1,16 @@
-'use client';
+﻿'use client';
 
 import AppLayout from '@/components/AppLayout';
 import { mergeClassNames } from '@/utils/classNames';
 import { ArrowLeft, MailCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import {
-  Suspense,
-  type ChangeEvent,
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const CODE_LENGTH = 6;
 const COOLDOWN_SECONDS = 60;
 
-function VerifyOtpFallback() {
-  return (
-    <AppLayout>
-      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-black px-4 text-white">
-        <span className="text-gray-400">Loading verification flow...</span>
-      </div>
-    </AppLayout>
-  );
-}
-
-function VerifyOtpContent() {
+export default function VerifyOtpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -40,6 +23,7 @@ function VerifyOtpContent() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isComplete = code.length === CODE_LENGTH;
+  // Removed progress calculation; we only show simple countdown text now
 
   const startCooldown = useCallback((seconds: number) => {
     if (timerRef.current) {
@@ -73,6 +57,7 @@ function VerifyOtpContent() {
   useEffect(() => {
     if (emailParam) {
       setEmail(emailParam);
+      // Removed initial status copy per design: no "We sent a 6-digit code to ..."
     }
   }, [emailParam]);
 
@@ -147,7 +132,8 @@ function VerifyOtpContent() {
     try {
       setResending(true);
       setError(null);
-      setStatus(null);
+      setStatus('Sending a fresh code to your inbox...');
+      setCode('');
 
       const res = await fetch('/api/auth/request-otp', {
         method: 'POST',
@@ -257,9 +243,7 @@ function VerifyOtpContent() {
 
               <div className="mt-8 text-center">
                 {cooldown > 0 ? (
-                  <p className="text-sm text-slate-400">
-                    Resend code available in <span className="font-semibold text-white">{cooldown}s</span>
-                  </p>
+                  <p className="text-sm text-slate-400">Resend code available in <span className="font-semibold text-white">{cooldown}s</span></p>
                 ) : (
                   <button
                     type="button"
@@ -278,13 +262,5 @@ function VerifyOtpContent() {
         </div>
       </div>
     </AppLayout>
-  );
-}
-
-export default function VerifyOtpPage() {
-  return (
-    <Suspense fallback={<VerifyOtpFallback />}>
-      <VerifyOtpContent />
-    </Suspense>
   );
 }
