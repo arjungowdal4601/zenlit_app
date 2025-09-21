@@ -75,8 +75,7 @@ export const normalSeedChats: Chat[] = [
     title: 'Alex Johnson',
     avatar: 'https://ui-avatars.com/api/?name=Alex+J&background=111827&color=fff',
     last: 'See you at the cafe!',
-    time: '2:45 PM',
-    unread: 2,
+    time: '',
     pinned: true,
   },
   {
@@ -85,7 +84,7 @@ export const normalSeedChats: Chat[] = [
     title: 'Sarah Chen',
     avatar: 'https://ui-avatars.com/api/?name=Sarah+C&background=111827&color=fff',
     last: 'Just sent the files.',
-    time: '1:18 PM',
+    time: '',
   },
   {
     id: 'c3',
@@ -93,7 +92,7 @@ export const normalSeedChats: Chat[] = [
     title: 'Mike Rodriguez',
     avatar: 'https://ui-avatars.com/api/?name=Mike+R&background=111827&color=fff',
     last: 'Got it, thanks!',
-    time: '12:02 PM',
+    time: '',
     muted: true,
   },
   {

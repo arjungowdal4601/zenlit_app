@@ -12,13 +12,13 @@ interface Props {
 
 const MessageBubble = ({ message, isMe, repliedTo }: Props) => {
   const bubbleBase = isMe
-    ? "self-end bg-blue-500/20 text-white"
+    ? "self-end text-white bg-blue-600"
     : "self-start bg-slate-900 text-gray-100";
 
   const radius = isMe ? "rounded-2xl rounded-tr-md" : "rounded-2xl rounded-tl-md";
 
   return (
-    <div className={`max-w-[78%] px-3 py-2 ${bubbleBase} ${radius}`}>
+    <div className={`max-w-[78%] px-3 py-2 ${bubbleBase} ${radius} shadow-[0_4px_12px_rgba(0,0,0,0.25)]`}>
       {message.deleted ? (
         <div className="text-sm text-gray-400 italic">Message deleted</div>
       ) : (
@@ -42,9 +42,9 @@ const MessageBubble = ({ message, isMe, repliedTo }: Props) => {
         </div>
       )}
       <div className={`mt-1 flex items-center gap-1 ${isMe ? 'justify-end' : 'justify-start'}`}>
-        <span className="text-[11px] text-gray-400">{new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        <span className={`text-[11px] ${isMe ? 'text-white/80' : 'text-gray-400'}`}>{new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
         {isMe && (
-          message.status === 'read' ? <CheckCheck size={14} className="text-blue-400" /> : <Check size={14} className="text-gray-400" />
+          message.status === 'read' ? <CheckCheck size={14} className="text-white/90" /> : <Check size={14} className="text-white/70" />
         )}
       </div>
     </div>

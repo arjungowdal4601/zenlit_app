@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
+import { Camera, Image as ImageIcon } from 'lucide-react';
 
 interface EditablePostProps {
   author: {
@@ -78,49 +79,48 @@ const EditablePost = ({ author, initialContent = '', onSave }: EditablePostProps
             </svg>
           </button>
 
+          {/* Image Selection Modal */}
           {showAttachPopup && (
-            <div className="absolute top-full right-0 mt-1 bg-gray-800 rounded-lg shadow-lg p-2 min-w-[120px] z-20">
-              <button
-                onClick={handleCameraSelect}
-                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors flex items-center space-x-2"
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+              <div
+                className="bg-black border border-white/20 rounded-2xl p-6 max-w-sm w-full mx-4 relative"
+                style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05)' }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                {/* Close button */}
+                <button
+                  onClick={() => setShowAttachPopup(false)}
+                  className="absolute top-4 right-4 text-gray-300 hover:text-white transition-colors"
+                  aria-label="Close image source selector"
                 >
-                  <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                  <circle cx="12" cy="13" r="3" />
-                </svg>
-                <span>Camera</span>
-              </button>
-              <button
-                onClick={handleGallerySelect}
-                className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors flex items-center space-x-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                  <circle cx="9" cy="9" r="2" />
-                  <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                </svg>
-                <span>Gallery</span>
-              </button>
+                  ✕
+                </button>
+
+                {/* Modal content */}
+                <h3 className="text-white text-lg font-semibold mb-6 text-center">Choose Image Source</h3>
+
+                {/* Action buttons */}
+                <div className="flex flex-col space-y-4">
+                  <button
+                    onClick={handleCameraSelect}
+                    className="flex items-center justify-center space-x-4 px-6 py-4 bg-black text-white rounded-xl transition-colors border border-white/30 hover:border-white/70 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  >
+                    <div className="p-2 rounded-full border border-white/40 bg-black">
+                      <Camera className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="text-lg font-medium">Camera</span>
+                  </button>
+
+                  <button
+                    onClick={handleGallerySelect}
+                    className="flex items-center justify-center space-x-4 px-6 py-4 bg-black text-white rounded-xl transition-colors border border-white/30 hover:border-white/70 focus:outline-none focus:ring-2 focus:ring-white/40"
+                  >
+                    <div className="p-2 rounded-full border border-white/40 bg-black">
+                      <ImageIcon className="w-6 h-6 text-white" />
+                    </div>
+                    <span className="text-lg font-medium">Gallery</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
