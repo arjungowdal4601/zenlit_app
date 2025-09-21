@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { MessageSquare, User } from 'lucide-react';
 import SocialLinkButton from '@/components/SocialLinkButton';
 import { DEFAULT_VISIBLE_PLATFORMS, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
+import { useRouter } from 'next/navigation';
 
 interface SocialProfileCardProps {
   user: {
@@ -23,6 +24,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
   user,
   selectedAccounts = DEFAULT_VISIBLE_PLATFORMS,
 }) {
+  const router = useRouter();
   const maxBioLength = 120;
   const shouldTruncate = user.bio.length > maxBioLength;
   const displayBio = shouldTruncate ? `${user.bio.substring(0, maxBioLength)}...` : user.bio;
@@ -31,6 +33,11 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
     if (process.env.NODE_ENV !== 'production') {
       console.info(`Navigate to ${platform}`);
     }
+  };
+
+  const goToProfile = () => {
+    // Navigate to other user's profile page
+    router.push(`/profile/${user.id}`);
   };
 
   return (
@@ -44,7 +51,8 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
             alt={`${user.name}'s profile`}
             width={40}
             height={40}
-            className="w-10 h-10 rounded-lg object-cover"
+            className="w-10 h-10 rounded-lg object-cover cursor-pointer"
+            onClick={goToProfile}
             priority
           />
         </div>
@@ -53,7 +61,11 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
         <div className="flex-1 min-w-0">
           {/* Name and Username */}
           <div className="mb-1 max-w-[210px] sm:max-w-[280px]">
-            <h3 className="text-white font-semibold text-base sm:text-lg truncate" style={{ fontFamily: 'var(--font-inter)' }}>
+            <h3
+              className="text-white font-semibold text-base sm:text-lg truncate cursor-pointer"
+              style={{ fontFamily: 'var(--font-inter)' }}
+              onClick={goToProfile}
+            >
               {user.name}
             </h3>
             {user.username && (
@@ -122,7 +134,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
         <div className="flex items-center space-x-2">
           <button
             type="button"
-            onClick={() => logNavigationIntent('profile')}
+            onClick={goToProfile}
             className="h-10 w-10 sm:h-12 sm:w-12 grid place-items-center rounded-md text-white hover:text-gray-300 transition-colors"
             aria-label="View Profile"
           >

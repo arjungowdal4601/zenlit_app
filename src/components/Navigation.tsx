@@ -18,11 +18,25 @@ const Navigation = () => {
   // Hide the bottom navigation only on individual chat routes
   if (pathname.startsWith('/messages/')) return null;
 
+  const isOtherUserProfile = pathname.startsWith('/profile/');
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-slate-700 rounded-t-3xl shadow-2xl">
       <div className="flex justify-around items-center py-2 px-6">
         {navigationItems.map(({ path, Icon }) => {
-          const isActive = pathname === path || pathname.startsWith(`${path}/`);
+          // Default active behavior
+          let isActive = pathname === path || pathname.startsWith(`${path}/`);
+
+          // Special cases:
+          // 1) Keep Radar highlighted when viewing other users' profiles (/profile/[id])
+          if (path === '/radar') {
+            isActive = pathname === '/radar' || isOtherUserProfile;
+          }
+          // 2) Only highlight Profile for the personal profile route (/profile)
+          if (path === '/profile') {
+            isActive = pathname === '/profile';
+          }
+
           return (
             <Link
               key={path}
