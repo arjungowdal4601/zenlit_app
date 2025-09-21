@@ -5,12 +5,12 @@ import { mergeClassNames } from '@/utils/classNames';
 import { ArrowLeft, MailCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ChangeEvent, FormEvent } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 const CODE_LENGTH = 6;
 const COOLDOWN_SECONDS = 60;
 
-export default function VerifyOtpPage() {
+function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -262,5 +262,21 @@ export default function VerifyOtpPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppLayout>
+          <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-black px-4 text-white">
+            <p className="text-sm text-slate-300">Loading verification details...</p>
+          </div>
+        </AppLayout>
+      }
+    >
+      <VerifyOtpContent />
+    </Suspense>
   );
 }
