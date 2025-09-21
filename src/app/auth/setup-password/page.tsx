@@ -1,12 +1,22 @@
 'use client';
 
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
 import AppLayout from '../../../components/AppLayout';
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Info } from 'lucide-react';
 import { mergeClassNames } from '../../../utils/classNames';
 
-export default function SetupPasswordPage() {
+function SetupPasswordFallback() {
+  return (
+    <AppLayout>
+      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-black px-4">
+        <span className="text-gray-400">Loading...</span>
+      </div>
+    </AppLayout>
+  );
+}
+
+function SetupPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -140,5 +150,13 @@ export default function SetupPasswordPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function SetupPasswordPage() {
+  return (
+    <Suspense fallback={<SetupPasswordFallback />}>
+      <SetupPasswordContent />
+    </Suspense>
   );
 }

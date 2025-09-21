@@ -17,7 +17,7 @@ import {
 const CODE_LENGTH = 6;
 const COOLDOWN_SECONDS = 60;
 
-function VerifyOtpFallback() {
+function VerifyOtpSigninFallback() {
   return (
     <AppLayout>
       <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-black px-4 text-white">
@@ -27,7 +27,7 @@ function VerifyOtpFallback() {
   );
 }
 
-function VerifyOtpContent() {
+function VerifyOtpSigninContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
@@ -94,16 +94,14 @@ function VerifyOtpContent() {
   const handleCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
     const sanitized = event.target.value.replace(/\D/g, '').slice(0, CODE_LENGTH);
     setCode(sanitized);
-    if (error) {
-      setError(null);
-    }
+    if (error) setError(null);
   };
 
   const handleVerify = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!email) {
-      setError('We could not detect your email. Please return to sign up and try again.');
+      setError('We could not detect your email. Please return and try again.');
       return;
     }
 
@@ -128,8 +126,8 @@ function VerifyOtpContent() {
         throw new Error(data?.error || 'Invalid or expired code.');
       }
 
-      setStatus('Email verified! Taking you to your profile setup...');
-      router.push('/onboarding/profile/basic');
+      setStatus('Email verified! Taking you to your radar...');
+      router.push('/radar');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
       setError(message);
@@ -140,7 +138,7 @@ function VerifyOtpContent() {
 
   const handleResend = async () => {
     if (!email) {
-      setError('We could not detect your email. Please return to sign up and try again.');
+      setError('We could not detect your email. Please return and try again.');
       return;
     }
 
@@ -175,7 +173,7 @@ function VerifyOtpContent() {
       <div className="min-h-[calc(100vh-80px)] flex flex-col bg-black px-4 text-white selection:bg-blue-500/60 selection:text-white">
         <div className="pt-6 pb-4">
           <button
-            onClick={() => router.push('/auth/signup')}
+            onClick={() => router.push('/auth/signin')}
             className="p-2 hover:bg-gray-800 rounded-full transition-colors"
             aria-label="Go back"
           >
@@ -272,8 +270,6 @@ function VerifyOtpContent() {
                 )}
               </div>
             </div>
-
-            {/* Removed "Wrong email? Start over" per requirement */}
           </div>
         </div>
       </div>
@@ -281,10 +277,10 @@ function VerifyOtpContent() {
   );
 }
 
-export default function VerifyOtpPage() {
+export default function VerifyOtpSigninPage() {
   return (
-    <Suspense fallback={<VerifyOtpFallback />}>
-      <VerifyOtpContent />
+    <Suspense fallback={<VerifyOtpSigninFallback />}>
+      <VerifyOtpSigninContent />
     </Suspense>
   );
 }
