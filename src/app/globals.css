@@ -53,3 +53,53 @@ body {
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(var(--composer-height) + 8px);
 }
+
+/* Make native date input icon/text white on dark background */
+.date-input-white-icon {
+  color-scheme: dark;
+  /* Custom white calendar icon overlay */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2' ry='2'/%3E%3Cline x1='16' y1='3' x2='16' y2='7'/%3E%3Cline x1='8' y1='3' x2='8' y2='7'/%3E%3Cline x1='3' y1='11' x2='21' y2='11'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center; /* position the icon */
+  background-size: 18px 18px;            /* icon size */
+  padding-right: 44px;                    /* prevent text overlay on icon */
+}
+
+/* Hide the native picker icon, but keep its clickable area */
+.date-input-white-icon::-webkit-calendar-picker-indicator {
+  opacity: 0;               /* visually hide, preserves click target */
+}
+/* Firefox */
+.date-input-white-icon::-moz-calendar-picker-indicator {
+  opacity: 0;
+}
+
+/* Fallbacks for browsers that still show dark icons (older engines) */
+.date-input-white-icon::-webkit-calendar-picker-indicator { filter: invert(1); }
+.date-input-white-icon::-moz-focus-inner { border: 0; }
+.date-input-white-icon::-moz-calendar-picker-indicator { filter: invert(1); }
+
+/* High-contrast/forced-colors accessibility: revert to native icon */
+@media (forced-colors: active) {
+  /* --- Global overrides: ensure native picker opens on click and icon is white --- */
+  .date-input-white-icon {
+    background-image: none; /* remove overlay so clicks go to native indicator */
+    padding-right: 12px;    /* comfortable padding near the icon */
+  }
+  .date-input-white-icon::-webkit-calendar-picker-indicator {
+    opacity: 1;                      /* visible and clickable */
+    pointer-events: auto;            /* ensure click passes to picker */
+    filter: invert(1) brightness(1.9); /* make icon white */
+    cursor: pointer;
+  }
+  /* Firefox */
+  .date-input-white-icon::-moz-calendar-picker-indicator {
+    opacity: 1;
+    filter: invert(1) brightness(1.9);
+    cursor: pointer;
+  }
+  .date-input-white-icon::-moz-calendar-picker-indicator {
+    opacity: 1;
+    filter: invert(1) brightness(1.9);
+  }
+}
