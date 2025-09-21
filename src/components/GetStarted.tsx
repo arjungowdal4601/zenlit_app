@@ -5,7 +5,7 @@ export default function GetStarted() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    router.push('/radar');
+    router.push('/auth/signup');
   };
 
   return (

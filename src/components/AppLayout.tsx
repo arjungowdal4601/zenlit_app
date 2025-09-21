@@ -9,8 +9,9 @@ interface AppLayoutProps {
 
 const AppLayout = ({ children }: AppLayoutProps) => {
   const pathname = usePathname() ?? '';
-  // Show navigation on the messages list (/messages), hide it on chat detail (/messages/[chatId])
-  const showNav = !pathname.startsWith('/messages/');
+  // Hide navigation during auth and onboarding flows, and on chat detail pages
+  const hideNav = pathname.startsWith('/messages/') || pathname.startsWith('/auth') || pathname.startsWith('/onboarding');
+  const showNav = !hideNav;
 
   return (
     <div className="min-h-screen bg-black text-white">
