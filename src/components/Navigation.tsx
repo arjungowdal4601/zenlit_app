@@ -15,6 +15,9 @@ const navigationItems = [
 const Navigation = () => {
   const pathname = usePathname() ?? '';
 
+  // Hide the bottom navigation only on individual chat routes
+  if (pathname.startsWith('/messages/')) return null;
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-black border-t border-slate-700 rounded-t-3xl shadow-2xl">
       <div className="flex justify-around items-center py-2 px-6">

@@ -39,23 +39,22 @@ const Composer = ({ onSend, value, onChange }: Props) => {
   };
 
   return (
-    <div className="sticky bottom-0 z-50 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60 border-t border-slate-800">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60 border-t border-slate-800" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="max-w-2xl mx-auto px-4 py-3">
         <div className="flex items-end gap-2">
-          <div className="flex-1 min-h-[40px] bg-slate-900 rounded-2xl px-3 py-2 border border-slate-800">
+          <div className="flex-1 min-h-[40px] bg-black rounded-2xl px-3 py-2 border border-white">
             <textarea
               ref={taRef}
-              className="w-full resize-none bg-transparent outline-none text-sm text-white placeholder:text-gray-500"
+              className="w-full resize-none bg-transparent outline-none text-sm text-white"
               rows={1}
-              placeholder="Message"
               value={val}
               onChange={(e) => handleChange(e.target.value)}
             />
           </div>
-          <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Attach">
-            <Paperclip className="text-gray-200" size={20} />
+          <button className="h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-white" aria-label="Attach">
+            <Paperclip className="text-white" size={20} />
           </button>
-          <button onClick={handleSend} disabled={!canSend} className={`h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${canSend ? 'bg-blue-600 hover:bg-blue-500' : 'bg-slate-800 cursor-not-allowed'}`} aria-label="Send">
+          <button onClick={handleSend} disabled={!canSend} className="h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed" aria-label="Send">
             <Send size={18} className="text-white" />
           </button>
         </div>

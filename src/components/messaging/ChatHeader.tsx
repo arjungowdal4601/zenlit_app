@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, MoreVertical, Eye } from "lucide-react";
+import { ChevronLeft, Eye } from "lucide-react";
 
 interface Props {
   title: string;
@@ -36,9 +36,7 @@ const ChatHeader = ({ title, subtitle, avatarUrl, anonymous }: Props) => {
               {subtitle && <div className="text-xs text-gray-400">{subtitle}</div>}
             </div>
           </div>
-          <button className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <MoreVertical className="text-white" />
-          </button>
+          
         </div>
       </div>
     </div>
