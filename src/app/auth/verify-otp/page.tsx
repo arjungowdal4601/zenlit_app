@@ -102,7 +102,7 @@ function VerifyOtpContent() {
       setError(null);
       setStatus(null);
 
-      const { data, error: verifyError } = await verifyOtp(email, code);
+      const { error: verifyError } = await verifyOtp(email, code);
 
       if (verifyError) {
         console.error('OTP verification error:', verifyError);
@@ -131,7 +131,7 @@ function VerifyOtpContent() {
       setStatus('Sending a fresh code to your inbox...');
       setCode('');
 
-      const { data, error: resendError } = await signInWithOtp(email);
+      const { error: resendError } = await signInWithOtp(email);
 
       if (resendError) {
         console.error('OTP resend error:', resendError);

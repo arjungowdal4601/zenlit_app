@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
+import { createClient, type AuthChangeEvent, type AuthOtpResponse, type AuthResponse, type OAuthResponse, type Session } from '@supabase/supabase-js';
 
 // Initialize the Supabase client with environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://xgdbkqewkgwlnaaspjpe.supabase.co';
@@ -10,80 +10,64 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Authentication helper functions
 export const auth = {
   // Sign up with email and password
-  signUp: async (email: string, password: string, userData?: { full_name?: string; username?: string }) => {
-    const { data, error } = await supabase.auth.signUp({
+  signUp: (
+    email: string,
+    password: string,
+    userData?: { full_name?: string; username?: string }
+  ): Promise<AuthResponse> =>
+    supabase.auth.signUp({
       email,
       password,
       options: {
         data: userData
       }
-    });
-    return { data, error };
-  },
+    }),
 
   // Sign in with email and password
-  signIn: async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+  signIn: (email: string, password: string): Promise<AuthResponse> =>
+    supabase.auth.signInWithPassword({
       email,
       password
-    });
-    return { data, error };
-  },
+    }),
 
   // Sign in with OTP
-  signInWithOtp: async (email: string) => {
-    const { data, error } = await supabase.auth.signInWithOtp({
+  signInWithOtp: (email: string): Promise<AuthOtpResponse> =>
+    supabase.auth.signInWithOtp({
       email,
       options: {
         shouldCreateUser: true
       }
-    });
-    return { data, error };
-  },
+    }),
 
   // Verify OTP
-  verifyOtp: async (email: string, token: string, type: 'signup' | 'email' = 'email') => {
-    const { data, error } = await supabase.auth.verifyOtp({
+  verifyOtp: (email: string, token: string, type: 'signup' | 'email' = 'email'): Promise<AuthResponse> =>
+    supabase.auth.verifyOtp({
       email,
       token,
       type
-    });
-    return { data, error };
-  },
+    }),
 
   // Sign in with Google
-  signInWithGoogle: async () => {
-    const { data, error } = await supabase.auth.signInWithOAuth({
+  signInWithGoogle: (): Promise<OAuthResponse> =>
+    supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`
       }
-    });
-    return { data, error };
-  },
+    }),
 
   // Sign out
-  signOut: async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
-  },
+  signOut: () => supabase.auth.signOut(),
 
   // Get current session
-  getSession: async () => {
-    const { data, error } = await supabase.auth.getSession();
-    return { data, error };
-  },
+  getSession: () => supabase.auth.getSession(),
 
   // Get current user
-  getUser: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    return { data, error };
-  },
+  getUser: () => supabase.auth.getUser(),
 
   // Listen to auth changes
-  onAuthStateChange: (callback: (event: string, session: Session | null) => void) => {
-    return supabase.auth.onAuthStateChange(callback);
-  }
+  onAuthStateChange: (callback: (event: AuthChangeEvent, session: Session | null) => void) =>
+    supabase.auth.onAuthStateChange(callback)
 };
 
 // Export types for database

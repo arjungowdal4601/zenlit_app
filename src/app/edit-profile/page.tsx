@@ -26,13 +26,6 @@ const EditProfilePage = () => {
     linkedin: ''
   });
 
-  // Social validation state
-  const [socialValidation, setSocialValidation] = useState({
-    instagram: { isValid: true, message: '' },
-    twitter: { isValid: true, message: '' }, // Will be renamed to 'x' in UI
-    linkedin: { isValid: true, message: '' }
-  });
-
   // Modal states for editing social links
   const [modalStates, setModalStates] = useState({
     instagram: false,
@@ -42,7 +35,6 @@ const EditProfilePage = () => {
 
   // Temporary input state for modal editing
   const [tempSocialInput, setTempSocialInput] = useState('');
-  const [currentEditingPlatform, setCurrentEditingPlatform] = useState<'instagram' | 'x' | 'linkedin' | null>(null);
 
   // State for form errors
   const [errors, setErrors] = useState<{
@@ -61,81 +53,13 @@ const EditProfilePage = () => {
   // Animation flags for modals
   const [bannerAnim, setBannerAnim] = useState(false);
   const [profileAnim, setProfileAnim] = useState(false);
-  
-  // Overlays should be visible permanently on all devices
-  const showOverlays = true;
-  
+
   // File input refs
   const profileFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
   const handleBack = () => {
     router.push('/profile');
-  };
-
-  // Regex validation functions for social links
-  const validateInstagram = (url: string): { isValid: boolean; message: string } => {
-    if (!url.trim()) return { isValid: true, message: '' };
-    
-    const instagramRegex = /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?$/;
-    
-    if (!instagramRegex.test(url)) {
-      return { 
-        isValid: false, 
-        message: 'Please enter a valid Instagram URL (e.g., instagram.com/username)' 
-      };
-    }
-    return { isValid: true, message: '' };
-  };
-
-  const validateTwitter = (url: string): { isValid: boolean; message: string } => {
-    if (!url.trim()) return { isValid: true, message: '' };
-    
-    const twitterRegex = /^(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/?$/;
-    
-    if (!twitterRegex.test(url)) {
-      return { 
-        isValid: false, 
-        message: 'Please enter a valid Twitter/X URL (e.g., x.com/username or twitter.com/username)' 
-      };
-    }
-    return { isValid: true, message: '' };
-  };
-
-  const validateLinkedIn = (url: string): { isValid: boolean; message: string } => {
-    if (!url.trim()) return { isValid: true, message: '' };
-    
-    const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9-]+\/?$/;
-    
-    if (!linkedinRegex.test(url)) {
-      return { 
-        isValid: false, 
-        message: 'Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)' 
-      };
-    }
-    return { isValid: true, message: '' };
-  };
-
-  // Handle social link changes with validation
-  const handleSocialLinkChange = (platform: keyof typeof socialLinks, value: string) => {
-    setSocialLinks(prev => ({ ...prev, [platform]: value }));
-    
-    let validation;
-    switch (platform) {
-      case 'instagram':
-        validation = validateInstagram(value);
-        break;
-      case 'twitter':
-        validation = validateTwitter(value);
-        break;
-      case 'linkedin':
-        validation = validateLinkedIn(value);
-        break;
-      default:
-        validation = { isValid: true, message: '' };
-    }
-    
-    setSocialValidation(prev => ({ ...prev, [platform]: validation }));
   };
 
   // Ensure only one menu is open at a time
@@ -525,7 +449,6 @@ const EditProfilePage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setIsSubmitting(false);
-                        setCurrentEditingPlatform('instagram');
                         setTempSocialInput(socialLinks.instagram);
                         setModalStates(prev => ({ ...prev, instagram: true }));
                       }}
@@ -569,7 +492,6 @@ const EditProfilePage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setIsSubmitting(false);
-                        setCurrentEditingPlatform('x');
                         setTempSocialInput(socialLinks.twitter);
                         setModalStates(prev => ({ ...prev, x: true }));
                       }}
@@ -613,7 +535,6 @@ const EditProfilePage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setIsSubmitting(false);
-                        setCurrentEditingPlatform('linkedin');
                         setTempSocialInput(socialLinks.linkedin);
                         setModalStates(prev => ({ ...prev, linkedin: true }));
                       }}
