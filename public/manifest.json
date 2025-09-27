@@ -1,7 +1,7 @@
 {
-  "name": "Zenlit - Location Based Networking",
-  "short_name": "Zenlit",
-  "description": "Connect with people nearby through location-based networking",
+  "name": "Zenlit V3 - Enhanced Location Based Networking",
+  "short_name": "Zenlit V3",
+  "description": "Connect with people nearby through our advanced location-based networking platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
