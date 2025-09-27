@@ -1,21 +1,22 @@
 "use client";
 
 import { Paperclip, Send } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 interface Props {
-  onSend: (text: string) => void;
+  onSend: (text: string) => Promise<void> | void;
   value?: string;
   onChange?: (value: string) => void;
 }
 
 const Composer = ({ onSend, value, onChange }: Props) => {
   const [inner, setInner] = useState("");
+  const [sending, setSending] = useState(false);
   const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   const val = value !== undefined ? value : inner;
 
-  const canSend = useMemo(() => val.trim().length > 0, [val]);
+  const canSend = useMemo(() => val.trim().length > 0 && !sending, [val, sending]);
 
   useEffect(() => {
     const ta = taRef.current;
@@ -25,11 +26,23 @@ const Composer = ({ onSend, value, onChange }: Props) => {
     ta.style.height = next + "px";
   }, [val]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!canSend) return;
-    onSend(val.trim());
-    if (value === undefined) {
-      setInner("");
+    try {
+      setSending(true);
+      await onSend(val.trim());
+      if (value === undefined) {
+        setInner("");
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      void handleSend();
     }
   };
 
@@ -49,12 +62,19 @@ const Composer = ({ onSend, value, onChange }: Props) => {
               rows={1}
               value={val}
               onChange={(e) => handleChange(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message"
             />
           </div>
           <button className="h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-white" aria-label="Attach">
             <Paperclip className="text-white" size={20} />
           </button>
-          <button onClick={handleSend} disabled={!canSend} className="h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed" aria-label="Send">
+          <button
+            onClick={() => void handleSend()}
+            disabled={!canSend}
+            className="h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed"
+            aria-label="Send"
+          >
             <Send size={18} className="text-white" />
           </button>
         </div>
