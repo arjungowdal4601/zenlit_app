@@ -20,8 +20,8 @@ export default function SignUpPage() {
     
     try {
       setLoading(true);
-      const { data, error } = await signInWithGoogle();
-      
+      const { error } = await signInWithGoogle();
+
       if (error) {
         console.error('Google sign-up error:', error);
         alert('Failed to sign up with Google. Please try again.');
@@ -42,8 +42,8 @@ export default function SignUpPage() {
     
     try {
       setLoading(true);
-      const { data, error } = await signInWithOtp(email.trim());
-      
+      const { error } = await signInWithOtp(email.trim());
+
       if (error) {
         console.error('OTP request error:', error);
         alert(error.message || 'Failed to send verification code. Please try again.');

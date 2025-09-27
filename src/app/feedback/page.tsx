@@ -4,12 +4,12 @@ import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
-import { ArrowLeft, Upload, X, Check, Paperclip } from 'lucide-react';
+import { ArrowLeft, X, Check, Paperclip } from 'lucide-react';
+import Image from 'next/image';
 
 const FeedbackPage = () => {
   const router = useRouter();
   const [feedbackText, setFeedbackText] = useState('');
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -31,7 +31,6 @@ const FeedbackPage = () => {
         return;
       }
 
-      setSelectedImage(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
@@ -41,7 +40,6 @@ const FeedbackPage = () => {
   };
 
   const removeImage = () => {
-    setSelectedImage(null);
     setImagePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -80,7 +78,6 @@ const FeedbackPage = () => {
       // Reset form after success
       setTimeout(() => {
         setFeedbackText('');
-        setSelectedImage(null);
         setImagePreview(null);
         setShowSuccess(false);
         if (fileInputRef.current) {
@@ -136,10 +133,13 @@ const FeedbackPage = () => {
             {/* Image Preview */}
             {imagePreview && (
               <div className="relative">
-                <img
+                <Image
                   src={imagePreview}
                   alt="Preview"
+                  width={800}
+                  height={450}
                   className="w-full max-h-64 object-cover rounded-xl border-2 border-white"
+                  unoptimized
                 />
                 <button
                   type="button"

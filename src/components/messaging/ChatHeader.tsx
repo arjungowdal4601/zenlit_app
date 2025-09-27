@@ -11,7 +11,8 @@ interface ChatHeaderProps {
   anonymous?: boolean;
 }
 
-const ChatHeader = ({ title, subtitle, avatarUrl, anonymous }: ChatHeaderProps) => {
+const ChatHeader = ({ title, subtitle, avatarUrl, anonymous: _anonymous }: ChatHeaderProps) => {
+  void _anonymous;
   return (
     <div className="sticky top-0 z-50 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60 border-b border-slate-800">
       <div className="max-w-2xl mx-auto px-4">
