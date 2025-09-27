@@ -1,62 +1,153 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-import AppLayout from '@/components/AppLayout';
-import AppHeader from '@/components/AppHeader';
-import SocialLinkButton from '@/components/SocialLinkButton';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
-import { NEARBY_USERS, type NearbyUser } from '@/constants/nearbyUsers';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 
-interface Post {
+import AppHeader from '@/components/AppHeader';
+import AppLayout from '@/components/AppLayout';
+import SocialLinkButton from '@/components/SocialLinkButton';
+import type { SocialLinks } from '@/constants/socialPlatforms';
+import { supabase } from '@/utils/supabase';
+import type { Tables } from '@/utils/supabase';
+
+type ProfileWithLinks = Tables['profiles'] & {
+  social_links: SocialLinks | null;
+};
+
+interface PostRow {
   id: string;
   content: string;
-  timestamp: string;
-  likes: number;
-  comments: number;
+  image_url: string | null;
+  created_at: string;
 }
+
+const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = (date.getTime() - now.getTime()) / 1000;
+  const absDiff = Math.abs(diff);
+
+  const units: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['year', 60 * 60 * 24 * 365],
+    ['month', 60 * 60 * 24 * 30],
+    ['day', 60 * 60 * 24],
+    ['hour', 60 * 60],
+    ['minute', 60],
+  ];
+
+  const formatter = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+  for (const [unit, seconds] of units) {
+    if (absDiff >= seconds || unit === 'minute') {
+      const value = Math.round(diff / seconds);
+      return formatter.format(value, unit);
+    }
+  }
+
+  return 'just now';
+};
 
 const OtherUserProfilePage = () => {
   const params = useParams();
   const idParam = (params?.id ?? '') as string;
 
-  // Look up the user from the Radar list data
-  const user: NearbyUser | undefined = useMemo(
-    () => NEARBY_USERS.find((u) => u.id === idParam),
-    [idParam]
-  );
+  const [profile, setProfile] = useState<ProfileWithLinks | null>(null);
+  const [posts, setPosts] = useState<PostRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const [posts] = useState<Post[]>([
-    {
-      id: '1',
-      content:
-        'Just finished working on an amazing new project! Excited to share more details soon. The journey of building something from scratch is always rewarding.',
-      timestamp: '2 hours ago',
-      likes: 24,
-      comments: 8,
-    },
-    {
-      id: '2',
-      content:
-        'Beautiful sunset today! Sometimes you need to step away from the screen and appreciate the simple things in life. Nature has a way of inspiring creativity.',
-      timestamp: '1 day ago',
-      likes: 45,
-      comments: 12,
-    },
-    {
-      id: '3',
-      content:
-        "Learning new technologies every day. The tech world moves fast, but that's what makes it exciting. Always stay curious and keep growing!",
-      timestamp: '3 days ago',
-      likes: 67,
-      comments: 23,
-    },
-  ]);
+  useEffect(() => {
+    if (!idParam) {
+      return;
+    }
 
-  // If user is not found, show a simple not found message with back to Radar
-  if (!user) {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      const [{ data: profileData, error: profileError }, { data: postData, error: postsError }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, full_name, username, bio, social_links, avatar_url, banner_url')
+          .eq('id', idParam)
+          .maybeSingle(),
+        supabase
+          .from('posts')
+          .select('id, content, image_url, created_at')
+          .eq('author_id', idParam)
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ]);
+
+      if (cancelled) return;
+
+      if (profileError) {
+        console.error('Unable to load profile', profileError);
+        setError('Unable to load profile.');
+        setProfile(null);
+        setPosts([]);
+        setLoading(false);
+        return;
+      }
+
+      if (!profileData) {
+        setError('User not found.');
+        setProfile(null);
+        setPosts([]);
+        setLoading(false);
+        return;
+      }
+
+      setProfile({ ...profileData, social_links: (profileData.social_links as SocialLinks | null) ?? null });
+      if (postsError) {
+        console.error('Unable to load posts', postsError);
+        setPosts([]);
+      } else {
+        setPosts(postData ?? []);
+      }
+      setError(null);
+      setLoading(false);
+    };
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [idParam]);
+
+  const socialLinks = useMemo<SocialLinks>(() => {
+    return {
+      instagram: profile?.social_links?.instagram ?? '',
+      linkedin: profile?.social_links?.linkedin ?? '',
+      twitter: profile?.social_links?.twitter ?? '',
+    };
+  }, [profile]);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="bg-black min-h-screen">
+          <div className="max-w-4xl mx-auto px-4">
+            <AppHeader title="Profile" />
+          </div>
+          <div className="max-w-2xl mx-auto px-4 py-12 space-y-6">
+            <div className="h-48 rounded-xl border border-white/10 bg-white/5 animate-pulse" />
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="h-24 rounded-xl border border-white/10 bg-white/5 animate-pulse" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!profile || error) {
     return (
       <AppLayout>
         <div className="bg-black min-h-screen">
@@ -74,8 +165,8 @@ const OtherUserProfilePage = () => {
               }
             />
           </div>
-          <div className="max-w-2xl mx-auto px-4 py-12">
-            <p className="text-gray-300">User not found.</p>
+          <div className="max-w-2xl mx-auto px-4 py-12 text-center text-gray-300">
+            {error ?? 'User not found.'}
           </div>
         </div>
       </AppLayout>
@@ -85,7 +176,6 @@ const OtherUserProfilePage = () => {
   return (
     <AppLayout>
       <div className="bg-black">
-        {/* Header WITHOUT hamburger/menu on the right */}
         <div className="max-w-4xl mx-auto px-4">
           <AppHeader
             title="Profile"
@@ -101,28 +191,20 @@ const OtherUserProfilePage = () => {
           />
         </div>
 
-        {/* LinkedIn-style Banner */}
         <div className="w-full">
           <div className="relative">
-            {/* Banner Background - Full width, no rounded corners */}
-            <div
-              className="h-48 sm:h-64"
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              }}
-            ></div>
+            <div className="h-48 sm:h-64 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
-            {/* Profile Section */}
             <div className="relative bg-black px-4 sm:px-6 pb-6">
-              {/* Profile Photo and Layout */}
               <div className="flex justify-between items-start pt-4">
-                {/* Left Side: Profile Photo and User Info */}
                 <div className="flex flex-col">
-                  {/* Profile Photo - square with rounded corners */}
                   <div className="relative -mt-12 sm:-mt-16 mb-4">
                     <Image
-                      src={user.profilePhoto}
-                      alt={`${user.name}'s profile`}
+                      src={
+                        profile.avatar_url ??
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.full_name ?? 'User')}&background=random&color=fff`
+                      }
+                      alt={`${profile.full_name ?? 'User'}'s profile`}
                       width={120}
                       height={120}
                       className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg object-cover border-4 border-black"
@@ -130,25 +212,28 @@ const OtherUserProfilePage = () => {
                     />
                   </div>
 
-                  {/* User Info - Display name and username below profile pic */}
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-inter)' }}>
-                      {user.name}
+                      {profile.full_name ?? 'Anonymous'}
                     </h1>
-                    {user.username && (
+                    {profile.username && (
                       <p className="text-gray-400 text-lg mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
-                        @{user.username}
+                        @{profile.username}
+                      </p>
+                    )}
+                    {profile.bio && (
+                      <p className="max-w-xl text-sm text-gray-300" style={{ fontFamily: 'var(--font-inter)' }}>
+                        {profile.bio}
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* Right Side: Social Links */}
                 <div className="flex items-center space-x-3 pt-2">
-                  {user.socialLinks?.instagram && (
+                  {socialLinks.instagram && (
                     <SocialLinkButton
                       platform="instagram"
-                      onClick={() => console.log('Instagram clicked')}
+                      onClick={() => window.open(`https://instagram.com/${socialLinks.instagram}`, '_blank')}
                       buttonClassName="hover:scale-110"
                       containerClassName="w-8 h-8"
                       iconClassName="w-5 h-5"
@@ -156,10 +241,10 @@ const OtherUserProfilePage = () => {
                     />
                   )}
 
-                  {user.socialLinks?.linkedin && (
+                  {socialLinks.linkedin && (
                     <SocialLinkButton
                       platform="linkedin"
-                      onClick={() => console.log('LinkedIn clicked')}
+                      onClick={() => window.open(`https://linkedin.com/in/${socialLinks.linkedin}`, '_blank')}
                       buttonClassName="hover:scale-110"
                       containerClassName="w-8 h-8"
                       iconClassName="w-5 h-5"
@@ -167,74 +252,43 @@ const OtherUserProfilePage = () => {
                     />
                   )}
 
-                  {user.socialLinks?.twitter && (
+                  {socialLinks.twitter && (
                     <SocialLinkButton
                       platform="twitter"
-                      onClick={() => console.log('Twitter clicked')}
+                      onClick={() => window.open(`https://twitter.com/${socialLinks.twitter}`, '_blank')}
                       buttonClassName="hover:scale-110"
                       containerClassName="w-8 h-8"
-                      iconClassName="w-4 h-4"
-                      containerStyle={{ border: '1px solid #333' }}
+                      iconClassName="w-5 h-5"
                       ariaLabel="X (Twitter)"
                     />
                   )}
                 </div>
               </div>
-
-              {/* Bio - Full width below the profile section */}
-              <div className="mt-4">
-                <p className="text-white text-base leading-relaxed max-w-2xl" style={{ fontFamily: 'var(--font-inter)' }}>
-                  {user.bio}
-                </p>
-              </div>
             </div>
           </div>
+        </div>
 
-          {/* Separator Line */}
-          <div className="mt-8 max-w-2xl mx-auto px-4">
-            <div className="border-t border-gray-700"></div>
-          </div>
-
-          {/* Posts Section (READ-ONLY: no 3-dots menu, no delete) */}
-          <div className="mt-6 space-y-3 max-w-2xl mx-auto px-4">
-            <h2 className="text-xl font-semibold text-white mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
-              Posts
-            </h2>
-
-            {posts.map((post) => (
-              <div key={post.id} className="mb-3 relative">
-                <div className="flex space-x-4">
-                  {/* Profile Picture */}
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={user.profilePhoto}
-                      alt={user.name}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                  </div>
-
-                  {/* Post Content */}
-                  <div className="flex-1 min-w-0">
-                    {/* Author Info - No timestamp */}
-                    <div className="mb-2">
-                      <h3 className="text-white font-semibold text-base">{user.name}</h3>
-                      {user.username && <span className="text-gray-400 text-sm">@{user.username}</span>}
+        <div className="max-w-2xl mx-auto px-4 py-10">
+          <h2 className="text-xl font-semibold text-white mb-4">Recent posts</h2>
+          {posts.length === 0 ? (
+            <div className="rounded-xl border border-white/10 bg-black/40 px-4 py-10 text-center text-sm text-gray-300">
+              {"This user hasn't posted yet."}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {posts.map((post) => (
+                <div key={post.id} className="rounded-xl border border-white/10 bg-black/60 p-4">
+                  <div className="mb-2 text-xs text-gray-400">{formatRelativeTime(post.created_at)}</div>
+                  <p className="text-sm text-gray-100 leading-relaxed">{post.content}</p>
+                  {post.image_url && (
+                    <div className="mt-3 overflow-hidden rounded-lg border border-white/10">
+                      <Image src={post.image_url} alt="Post image" width={640} height={360} className="h-auto w-full object-cover" />
                     </div>
-
-                    {/* Post Text */}
-                    <p className="text-gray-100 text-base mb-4 leading-tight">{post.content}</p>
-                  </div>
+                  )}
                 </div>
-
-                {/* Post separator */}
-                <div className="mt-2 mb-1">
-                  <div className="h-px bg-gray-600 w-full"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>

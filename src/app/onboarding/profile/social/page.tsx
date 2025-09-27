@@ -1,664 +1,341 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import AppLayout from '@/components/AppLayout';
-import AppHeader from '@/components/AppHeader';
-import { Camera, X, Check, Save, Upload, Edit, Instagram, Trash2 } from 'lucide-react';
-import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { Camera, Check, Upload, X } from 'lucide-react';
+
+import AppHeader from '@/components/AppHeader';
+import AppLayout from '@/components/AppLayout';
+import Modal from '@/components/ui/Modal';
+import type { SocialLinks } from '@/constants/socialPlatforms';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase, uploadUserFile } from '@/utils/supabase';
+
+const defaultLinks: SocialLinks = {
+  instagram: '',
+  linkedin: '',
+  twitter: '',
+};
 
 export default function CompleteProfileOnboardingPage() {
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
 
-  // State for profile data (no display name here)
-  const [profileData, setProfileData] = useState({
-    bio: '',
-    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4',
-    bannerImage: null as string | null,
-  });
+  const [bio, setBio] = useState('');
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({ ...defaultLinks });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [bannerModalOpen, setBannerModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // State for social links
-  const [socialLinks, setSocialLinks] = useState({
-    instagram: '',
-    twitter: '',
-    linkedin: '',
-  });
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
-  // Modal states for editing social links
-  const [modalStates, setModalStates] = useState({
-    instagram: false,
-    x: false,
-    linkedin: false,
-  });
-
-  // Temporary input state for modal editing
-  const [tempSocialInput, setTempSocialInput] = useState('');
-
-  // State for form errors (bio only here)
-  const [errors, setErrors] = useState<{ bio: string }>({ bio: '' });
-
-  // UI state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showBannerMenu, setShowBannerMenu] = useState(false);
-  const [bannerAnim, setBannerAnim] = useState(false);
-  const [profileAnim, setProfileAnim] = useState(false);
-
-  // File input refs
-  const profileFileInputRef = useRef<HTMLInputElement>(null);
-  const bannerFileInputRef = useRef<HTMLInputElement>(null);
-
-  // Ensure only one menu is open at a time
-  useEffect(() => { if (showBannerMenu) setShowProfileMenu(false); }, [showBannerMenu]);
-  useEffect(() => { if (showProfileMenu) setShowBannerMenu(false); }, [showProfileMenu]);
-
-  // Lock body scroll when any popup is open
   useEffect(() => {
-    const lock = showBannerMenu || showProfileMenu;
-    const prev = document.body.style.overflow;
-    if (lock) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = prev || '';
-    return () => { document.body.style.overflow = prev || ''; };
-  }, [showBannerMenu, showProfileMenu]);
-
-  // Animate popups on open
-  useEffect(() => { if (showBannerMenu) requestAnimationFrame(() => setBannerAnim(true)); else setBannerAnim(false); }, [showBannerMenu]);
-  useEffect(() => { if (showProfileMenu) requestAnimationFrame(() => setProfileAnim(true)); else setProfileAnim(false); }, [showProfileMenu]);
-
-  // Banner image handlers
-  const handleBannerImageSelect = () => { bannerFileInputRef.current?.click(); setShowBannerMenu(false); };
-  const handleRemoveBannerImage = () => { setProfileData(prev => ({ ...prev, bannerImage: null })); setShowBannerMenu(false); };
-
-  // Profile image handlers
-  const handleProfileImageSelect = () => { profileFileInputRef.current?.click(); setShowProfileMenu(false); };
-  const handleRemoveProfileImage = () => { setProfileData(prev => ({ ...prev, profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4' })); setShowProfileMenu(false); };
-
-  // Generic input change
-  const handleInputChange = (field: keyof typeof profileData, value: string) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
-    if (field === 'bio' && errors.bio) setErrors(prev => ({ ...prev, bio: '' }));
-  };
-
-  const validateForm = () => {
-    const newErrors = { bio: '' } as { bio: string };
-    if (profileData.bio.length > 500) newErrors.bio = 'Bio must be less than 500 characters';
-    setErrors(newErrors);
-    return Object.values(newErrors).every(e => e === '');
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setIsSubmitting(true);
-    try {
-      // Simulate API call (reuse same behavior as Edit Profile)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setShowSuccess(true);
-      setTimeout(() => {
-        setShowSuccess(false);
-        // Remain on page after saving, as in Edit Profile
-      }, 2000);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-    } finally {
-      setIsSubmitting(false);
+    if (authLoading) {
+      return;
     }
+
+    if (!user) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadProfile = async () => {
+      const { data, error: loadError } = await supabase
+        .from('profiles')
+        .select('bio, social_links, avatar_url, banner_url')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (loadError) {
+        console.error('Unable to load profile', loadError);
+        setError('Unable to load your profile. Please try again.');
+        return;
+      }
+
+      setBio(data?.bio ?? '');
+      const links = (data?.social_links as SocialLinks | null) ?? null;
+      setSocialLinks({
+        instagram: links?.instagram ?? '',
+        linkedin: links?.linkedin ?? '',
+        twitter: links?.twitter ?? '',
+      });
+      setAvatarUrl(data?.avatar_url ?? null);
+      setBannerUrl(data?.banner_url ?? null);
+    };
+
+    void loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading]);
+
+  const buildLinks = () => {
+    const cleaned: SocialLinks = {};
+    (Object.keys(socialLinks) as (keyof SocialLinks)[]).forEach((key) => {
+      const value = socialLinks[key]?.trim();
+      if (value) {
+        cleaned[key] = value;
+      }
+    });
+    return Object.keys(cleaned).length > 0 ? cleaned : null;
   };
 
-  const handleSkip = () => {
-    router.push('/radar');
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!user) {
+      setError('You must be signed in to continue.');
+      return;
+    }
+
+    if (bio.length > 500) {
+      setError('Bio must be 500 characters or fewer.');
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      let nextAvatar = avatarUrl;
+      let nextBanner = bannerUrl;
+
+      if (avatarFile) {
+        nextAvatar = await uploadUserFile('avatars', user.id, avatarFile);
+      }
+
+      if (bannerFile) {
+        nextBanner = await uploadUserFile('banners', user.id, bannerFile);
+      }
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          bio: bio.trim() || null,
+          social_links: buildLinks(),
+          avatar_url: nextAvatar,
+          banner_url: nextBanner,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      setAvatarFile(null);
+      setBannerFile(null);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2500);
+    } catch (submitError) {
+      console.error('Error saving profile', submitError);
+      setError(submitError instanceof Error ? submitError.message : 'Failed to save profile.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
     <AppLayout>
       <div className="bg-black min-h-screen">
-        {/* Header */}
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-3xl mx-auto px-4">
           <AppHeader title="Complete your profile" />
         </div>
 
-        {/* Success Message */}
-        {showSuccess && (
-          <div className="max-w-4xl mx-auto px-4 mb-6">
-            <div className="bg-green-600 text-white p-4 rounded-lg flex items-center gap-3">
-              <Check className="w-5 h-5" />
-              <span style={{ fontFamily: 'var(--font-inter)' }}>Profile updated successfully!</span>
+        <div className="max-w-3xl mx-auto px-4 pb-10">
+          {success && (
+            <div className="mb-6 flex items-center gap-3 rounded-lg bg-green-600/90 px-4 py-3 text-white">
+              <Check className="h-5 w-5" />
+              <span>Profile updated successfully</span>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Profile Layout */}
-        <div className="w-full">
-          <div className="relative">
-            {/* Banner Background */}
-            <div className="relative">
-              <div
-                className="h-48 sm:h-64 cursor-pointer group"
-                style={{
-                  backgroundImage: profileData.bannerImage
-                    ? `url(${profileData.bannerImage})`
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                }}
-                onClick={() => setShowBannerMenu(true)}
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-black/30 absolute inset-0 transition-colors duration-200" />
-                  <div className="opacity-100 transition-opacity duration-200 relative z-10">
-                    <div className="bg-black/75 rounded-full p-3">
-                      <Camera className="w-6 h-6 text-white" />
-                    </div>
+          {error && <div className="mb-6 rounded-lg bg-red-600/90 px-4 py-3 text-white">{error}</div>}
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <section className="rounded-2xl border border-white/10 bg-black p-6">
+              <h2 className="text-lg font-semibold text-white mb-4">Profile photos</h2>
+
+              <div className="space-y-6">
+                <div>
+                  <span className="block text-sm font-medium text-gray-300 mb-2">Banner</span>
+                  <div className="relative h-40 w-full overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+                    {bannerUrl && <Image src={bannerUrl} alt="Banner" fill className="object-cover" />}
+                    <button
+                      type="button"
+                      onClick={() => setBannerModalOpen(true)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity hover:opacity-100"
+                    >
+                      <Camera className="h-6 w-6" />
+                    </button>
                   </div>
+                  <input
+                    ref={bannerInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        setBannerFile(file);
+                        setBannerUrl(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
                 </div>
-              </div>
 
-              {/* Banner Menu Popup */}
-              {showBannerMenu && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                  <div className="absolute inset-0 bg-black/50" onClick={() => setShowBannerMenu(false)} />
-                  <div
-                    role="dialog"
-                    aria-modal="true"
-                    className={`relative z-10 bg-black rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl ring-1 ring-white/20 transform transition-all duration-200 ${bannerAnim ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="space-y-3">
-                      <button
-                        onClick={handleBannerImageSelect}
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-black border border-white rounded-lg text-white transition-colors"
-                      >
-                        <Upload className="w-5 h-5" />
-                        <span style={{ fontFamily: 'var(--font-inter)' }}>Upload Banner</span>
-                      </button>
-                      <button
-                        onClick={handleRemoveBannerImage}
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-black border border-white rounded-lg text-white transition-colors"
-                      >
-                        <X className="w-5 h-5" />
-                        <span style={{ fontFamily: 'var(--font-inter)' }}>Remove Banner</span>
-                      </button>
-                      <button
-                        onClick={() => setShowBannerMenu(false)}
-                        className="w-full px-4 py-3 bg-black border border-white rounded-lg text-white transition-colors"
-                        style={{ fontFamily: 'var(--font-inter)' }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Profile Section */}
-            <div className="relative bg-black px-4 sm:px-6 pb-6">
-              <div className="flex justify-between items-start pt-4">
-                <div className="flex flex-col">
-                  {/* Profile Photo */}
-                  <div className="relative -mt-12 sm:-mt-16 mb-4">
-                    <div className="relative cursor-pointer group" onClick={() => setShowProfileMenu(true)}>
-                      <Image
-                        src={profileData.profileImage}
-                        alt="Profile"
-                        width={128}
-                        height={128}
-                        className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg object-cover border-4 border-black"
-                        priority
-                        unoptimized
-                      />
-                      <div className="absolute inset-0 z-30 pointer-events-none transition-all duration-200 flex items-center justify-center rounded-lg">
-                        <div className="opacity-100 transition-opacity duration-200 relative z-30">
-                          <div className="bg-black/75 rounded-full p-3">
-                            <Camera className="w-6 h-6 text-white" />
-                          </div>
-                        </div>
-                        <div className="bg-black/50 absolute inset-0 rounded-lg transition-colors duration-200" />
-                      </div>
-                    </div>
-
-                    {/* Profile Menu Popup */}
-                    {showProfileMenu && (
-                      <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/50" onClick={() => setShowProfileMenu(false)} />
-                        <div
-                          role="dialog"
-                          aria-modal="true"
-                          className={`relative z-10 bg-black rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl ring-1 ring-white/20 transform transition-all duration-200 ${profileAnim ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="space-y-3">
-                            <button
-                              onClick={handleProfileImageSelect}
-                              className="w-full flex items-center gap-3 px-4 py-3 bg-black border border-white rounded-lg text-white transition-colors"
-                            >
-                              <Upload className="w-5 h-5" />
-                              <span style={{ fontFamily: 'var(--font-inter)' }}>Upload Profile Picture</span>
-                            </button>
-                            <button
-                              onClick={handleRemoveProfileImage}
-                              className="w-full flex items-center gap-3 px-4 py-3 bg-black border border-white rounded-lg text-white transition-colors"
-                            >
-                              <X className="w-5 h-5" />
-                              <span style={{ fontFamily: 'var(--font-inter)' }}>Remove Profile Picture</span>
-                            </button>
-                            <button
-                              onClick={() => setShowProfileMenu(false)}
-                              className="w-full px-4 py-3 bg-black border border-white rounded-lg text-white transition-colors"
-                              style={{ fontFamily: 'var(--font-inter)' }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative h-24 w-24 overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
+                    {avatarUrl ? (
+                      <Image src={avatarUrl} alt="Avatar" fill className="object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-gray-500">No avatar</div>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setAvatarModalOpen(true)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/40 text-white opacity-0 transition-opacity hover:opacity-100"
+                    >
+                      <Camera className="h-5 w-5" />
+                    </button>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Form Fields */}
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 space-y-6 pb-8">
-              {/* Bio */}
-              <div>
-                <label htmlFor="bio" className="block text-white font-medium mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
-                  Bio
-                </label>
-                <textarea
-                  id="bio"
-                  value={profileData.bio}
-                  onChange={(e) => handleInputChange('bio', e.target.value)}
-                  rows={4}
-                  className={`w-full px-4 py-3 bg-black border ${errors.bio ? 'border-red-500' : 'border-white'} rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white transition-colors resize-none`}
-                  style={{ fontFamily: 'var(--font-inter)' }}
-                  placeholder="Tell us about yourself..."
-                />
-                <div className="flex justify-between items-center mt-1">
-                  {errors.bio && (
-                    <p className="text-red-400 text-sm" style={{ fontFamily: 'var(--font-inter)' }}>
-                      {errors.bio}
-                    </p>
-                  )}
-                  <p className={`text-sm ml-auto ${profileData.bio.length > 450 ? 'text-red-400' : 'text-gray-400'}`} style={{ fontFamily: 'var(--font-inter)' }}>
-                    {profileData.bio.length}/500
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        setAvatarFile(file);
+                        setAvatarUrl(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+
+                  <p className="text-sm text-gray-400">
+                    Upload a profile photo so people can recognise you.
                   </p>
                 </div>
               </div>
+            </section>
 
-            {/* Social Links Section */}
-            <div>
-              <label className="block text-white font-medium mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
-                Social Links
-              </label>
-              <div className="space-y-4">
-                {/* Instagram Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-purple-400" 
-                     style={{ boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)', background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600 via-pink-600 to-orange-400 flex items-center justify-center flex-shrink-0">
-                        <Instagram className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          Instagram Link
-                        </h3>
-                        <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.instagram || 'No link added'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsSubmitting(false);
-                      setTempSocialInput(socialLinks.instagram);
-                      setModalStates(prev => ({ ...prev, instagram: true }));
-                    }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </button>
-                  </div>
-                </div>
-
-                {/* X (Twitter) Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-gray-400" 
-                     style={{ boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)', background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-10 rounded-lg bg-black border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
-                        <FaXTwitter className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          X Link
-                        </h3>
-                        <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.twitter || 'No link added'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsSubmitting(false);
-                      setTempSocialInput(socialLinks.twitter);
-                      setModalStates(prev => ({ ...prev, x: true }));
-                    }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </button>
-                  </div>
-                </div>
-
-                {/* LinkedIn Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-blue-400" 
-                     style={{ boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)', background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)' }}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                        <FaLinkedin className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          LinkedIn Link
-                        </h3>
-                        <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.linkedin || 'No link added'}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsSubmitting(false);
-                      setTempSocialInput(socialLinks.linkedin);
-                      setModalStates(prev => ({ ...prev, linkedin: true }));
-                    }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      <Edit className="w-4 h-4" />
-                      Edit
-                    </button>
-                  </div>
-                </div>
+            <section className="rounded-2xl border border-white/10 bg-black p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
+                <textarea
+                  value={bio}
+                  onChange={(event) => setBio(event.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-white/40 bg-black px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
+                  placeholder="Tell people a little about yourself"
+                />
+                <p className="mt-1 text-xs text-gray-500">{bio.length}/500</p>
               </div>
-            </div>
+            </section>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 pt-4">
+            <section className="rounded-2xl border border-white/10 bg-black p-6 space-y-5">
+              <h2 className="text-lg font-semibold text-white">Social links</h2>
+              {([
+                { key: 'instagram' as const, label: 'Instagram', placeholder: 'yourhandle' },
+                { key: 'linkedin' as const, label: 'LinkedIn', placeholder: 'your-profile' },
+                { key: 'twitter' as const, label: 'X (Twitter)', placeholder: 'yourhandle' },
+              ]).map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>
+                  <input
+                    type="text"
+                    value={socialLinks[key] ?? ''}
+                    onChange={(event) => setSocialLinks((prev) => ({ ...prev, [key]: event.target.value }))}
+                    className="w-full rounded-lg border border-white/40 bg-black px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white"
+                    placeholder={placeholder}
+                  />
+                </div>
+              ))}
+            </section>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                onClick={handleSkip}
-                className="flex-1 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium"
-                style={{ fontFamily: 'var(--font-inter)' }}
+                onClick={() => router.push('/radar')}
+                className="rounded-lg border border-white/30 px-4 py-2 text-sm text-white transition hover:bg-white/10"
               >
-                Skip
+                Skip for now
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:transform-none disabled:shadow-none font-medium flex items-center justify-center gap-2"
-                style={{ fontFamily: 'var(--font-inter)' }}
+                disabled={isSaving}
+                className="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Save Changes
-                  </>
-                )}
+                {isSaving ? 'Saving…' : 'Save profile'}
               </button>
             </div>
           </form>
-
-          {/* Hidden File Inputs */}
-          <input
-            ref={profileFileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  setProfileData(prev => ({ ...prev, profileImage: event.target?.result as string }));
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-            className="hidden"
-          />
-          <input
-            ref={bannerFileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  setProfileData(prev => ({ ...prev, bannerImage: event.target?.result as string }));
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-            className="hidden"
-          />
-
-          {/* Social Link Edit Modals */}
-          {/* Instagram Modal */}
-          {modalStates.instagram && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/50" onClick={() => setModalStates(prev => ({ ...prev, instagram: false }))} />
-              <div
-                role="dialog"
-                aria-modal="true"
-                className="relative z-10 bg-black rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl ring-1 ring-white/20 transform transition-all duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-600 via-pink-600 to-orange-400 flex items-center justify-center">
-                        <Instagram className="w-6 h-6 text-white" />
-                      </div>
-                      <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        Instagram Link
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label="Remove Instagram Link"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, instagram: '' })); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
-                      className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div>
-                    <input
-                      type="text"
-                      value={tempSocialInput}
-                      onChange={(e) => setTempSocialInput(e.target.value)}
-                      className="w-full px-4 py-3 bg-black border border-white rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white transition-colors"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                      placeholder="https://instagram.com/yourusername"
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, instagram: tempSocialInput })); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
-                      className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
-                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* X (Twitter) Modal */}
-          {modalStates.x && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/50" onClick={() => setModalStates(prev => ({ ...prev, x: false }))} />
-              <div
-                role="dialog"
-                aria-modal="true"
-                className="relative z-10 bg-black rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl ring-1 ring-white/20 transform transition-all duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-black border-2 border-gray-600 flex items-center justify-center">
-                        <FaXTwitter className="w-6 h-6 text-white" />
-                      </div>
-                      <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        X Link
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label="Remove X Link"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, twitter: '' })); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
-                      className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div>
-                    <input
-                      type="text"
-                      value={tempSocialInput}
-                      onChange={(e) => setTempSocialInput(e.target.value)}
-                      className="w-full px-4 py-3 bg-black border border-white rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-gray-400 transition-colors"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                      placeholder="https://x.com/yourusername"
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, twitter: tempSocialInput })); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
-                      className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
-                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* LinkedIn Modal */}
-          {modalStates.linkedin && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <div className="absolute inset-0 bg-black/50" onClick={() => setModalStates(prev => ({ ...prev, linkedin: false }))} />
-              <div
-                role="dialog"
-                aria-modal="true"
-                className="relative z-10 bg-black rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl ring-1 ring-white/20 transform transition-all duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                        <FaLinkedin className="w-6 h-6 text-white" />
-                      </div>
-                      <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        LinkedIn Link
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label="Remove LinkedIn Link"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, linkedin: '' })); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
-                      className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <div>
-                    <input
-                      type="text"
-                      value={tempSocialInput}
-                      onChange={(e) => setTempSocialInput(e.target.value)}
-                      className="w-full px-4 py-3 bg-black border border-white rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-400 transition-colors"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                      placeholder="https://linkedin.com/in/yourusername"
-                    />
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, linkedin: tempSocialInput })); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
-                      className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
-                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium"
-                      style={{ fontFamily: 'var(--font-inter)' }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
+
+      <Modal
+        open={avatarModalOpen}
+        title="Update avatar"
+        onClose={() => setAvatarModalOpen(false)}
+        actions={[
+          {
+            label: 'Upload',
+            icon: <Upload className="h-4 w-4" />,
+            onClick: () => {
+              avatarInputRef.current?.click();
+              setAvatarModalOpen(false);
+            },
+          },
+          {
+            label: 'Remove',
+            icon: <X className="h-4 w-4" />,
+            onClick: () => {
+              setAvatarFile(null);
+              setAvatarUrl(null);
+              setAvatarModalOpen(false);
+            },
+          },
+        ]}
+      />
+
+      <Modal
+        open={bannerModalOpen}
+        title="Update banner"
+        onClose={() => setBannerModalOpen(false)}
+        actions={[
+          {
+            label: 'Upload',
+            icon: <Upload className="h-4 w-4" />,
+            onClick: () => {
+              bannerInputRef.current?.click();
+              setBannerModalOpen(false);
+            },
+          },
+          {
+            label: 'Remove',
+            icon: <X className="h-4 w-4" />,
+            onClick: () => {
+              setBannerFile(null);
+              setBannerUrl(null);
+              setBannerModalOpen(false);
+            },
+          },
+        ]}
+      />
     </AppLayout>
   );
 }

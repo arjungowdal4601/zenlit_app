@@ -3,47 +3,49 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Eye } from "lucide-react";
-import type { Chat } from "./data";
+
+import type { ChatListEntry } from "@/types/messaging";
 
 interface Props {
-  chat: Chat;
+  chat: ChatListEntry;
   isAnonymous?: boolean;
 }
 
+const formatTime = (isoDate: string | null) => {
+  if (!isoDate) return '';
+  const date = new Date(isoDate);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
 const ChatListItem = ({ chat, isAnonymous }: Props) => {
   const href = `/messages/${chat.id}`;
+  const subtitle = chat.lastMessageText ?? (isAnonymous ? 'Start the conversation anonymously' : 'Say hello');
 
   return (
     <div className="group relative">
-      <Link href={href} className="flex items-center gap-3 px-3 py-3 hover:bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
-        {/* Avatar */}
+      <Link
+        href={href}
+        className="flex items-center gap-3 px-3 py-3 hover:bg-slate-900/50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+      >
         <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-800 flex items-center justify-center shrink-0">
           {isAnonymous ? (
             <Eye size={20} className="text-gray-300" />
+          ) : chat.avatarUrl ? (
+            <Image src={chat.avatarUrl} alt={chat.title ?? 'Chat'} width={48} height={48} className="object-cover" />
           ) : (
-            chat.avatar ? (
-              <Image src={chat.avatar} alt={chat.title ?? 'Chat'} width={48} height={48} className="object-cover" />
-            ) : (
-              <div className="w-full h-full bg-slate-700" />
-            )
+            <div className="w-full h-full bg-slate-700" />
           )}
         </div>
 
-        {/* Main */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="truncate text-sm font-medium text-white">
-              {isAnonymous ? 'Anonymous chat' : (chat.title ?? 'Untitled')}
+              {isAnonymous ? 'Anonymous chat' : chat.title ?? 'Untitled chat'}
             </div>
-            <div className="ml-2 text-xs text-gray-400 shrink-0">{chat.time}</div>
+            <div className="ml-2 text-xs text-gray-400 shrink-0">{formatTime(chat.lastMessageAt)}</div>
           </div>
           <div className="flex items-center justify-between gap-2">
-            <div className="truncate text-sm text-gray-400">{chat.last}</div>
-            {chat.unread ? (
-              <span className="ml-2 inline-flex items-center justify-center min-w-5 h-5 px-1 rounded-full bg-blue-600/20 text-blue-400 text-xs">
-                {chat.unread}
-              </span>
-            ) : null}
+            <div className="truncate text-sm text-gray-400">{subtitle}</div>
           </div>
         </div>
 
