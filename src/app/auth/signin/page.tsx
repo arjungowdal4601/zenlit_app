@@ -5,32 +5,51 @@ import AppLayout from '@/components/AppLayout';
 import { FcGoogle } from 'react-icons/fc';
 import { useState } from 'react';
 import { mergeClassNames } from '@/utils/classNames';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignInPage() {
   const router = useRouter();
+  const { signInWithGoogle, signInWithOtp } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  const continueWithGoogle = () => {
-    // For preview: immediately navigate to radar page as in Sign Up page pattern
-    router.push('/radar');
+  const continueWithGoogle = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await signInWithGoogle();
+      
+      if (error) {
+        console.error('Google sign-in error:', error);
+        alert('Failed to sign in with Google. Please try again.');
+        return;
+      }
+
+      // The redirect will be handled by the OAuth callback
+    } catch (error) {
+      console.error('Unexpected error during Google sign-in:', error);
+      alert('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const continueWithEmail = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/auth/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Failed to send code');
-      router.push(`/auth/verify-otp-signin?email=${encodeURIComponent(email)}&sent=1`);
-    } catch (e) {
-      alert((e as Error).message);
+      const { data, error } = await signInWithOtp(email.trim());
+      
+      if (error) {
+        console.error('OTP request error:', error);
+        alert(error.message || 'Failed to send verification code. Please try again.');
+        return;
+      }
+
+      router.push(`/auth/verify-otp-signin?email=${encodeURIComponent(email.trim())}&sent=1`);
+    } catch (error) {
+      console.error('Unexpected error during OTP request:', error);
+      alert('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }

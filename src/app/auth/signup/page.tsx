@@ -5,31 +5,55 @@ import AppLayout from '@/components/AppLayout';
 import { FcGoogle } from 'react-icons/fc';
 import { useState } from 'react';
 import { mergeClassNames } from '@/utils/classNames';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { signInWithGoogle, signInWithOtp } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  const continueWithGoogle = () => {
-    router.push('/onboarding/profile/basic');
+  const continueWithGoogle = async () => {
+    if (loading) return; // Prevent multiple clicks
+    
+    try {
+      setLoading(true);
+      const { data, error } = await signInWithGoogle();
+      
+      if (error) {
+        console.error('Google sign-up error:', error);
+        alert('Failed to sign up with Google. Please try again.');
+        return;
+      }
+
+      // The redirect will be handled by the OAuth callback
+    } catch (error) {
+      console.error('Unexpected error during Google sign-up:', error);
+      alert('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const continueWithEmail = async () => {
+    if (loading || !isValidEmail) return; // Prevent multiple clicks and invalid emails
+    
     try {
       setLoading(true);
-      const res = await fetch('/api/auth/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Failed to send code');
-      router.push(`/auth/verify-otp?email=${encodeURIComponent(email)}&sent=1`);
-    } catch (e) {
-      alert((e as Error).message);
+      const { data, error } = await signInWithOtp(email.trim());
+      
+      if (error) {
+        console.error('OTP request error:', error);
+        alert(error.message || 'Failed to send verification code. Please try again.');
+        return;
+      }
+
+      router.push(`/auth/verify-otp?email=${encodeURIComponent(email.trim())}&sent=1`);
+    } catch (error) {
+      console.error('Unexpected error during OTP request:', error);
+      alert('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -65,10 +89,13 @@ export default function SignUpPage() {
 
           <button
             onClick={continueWithGoogle}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-800 font-medium border border-gray-200 rounded-xl px-4 py-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-800 font-medium border border-gray-200 rounded-xl px-4 py-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
           >
             <FcGoogle className="text-2xl" />
-            <span className="text-gray-900 font-medium">Continue with Google</span>
+            <span className="text-gray-900 font-medium">
+              {loading ? 'Signing up...' : 'Continue with Google'}
+            </span>
           </button>
 
           <div className="flex items-center gap-3 my-6">

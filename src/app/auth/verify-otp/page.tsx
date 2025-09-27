@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import AppLayout from '@/components/AppLayout';
 import { mergeClassNames } from '@/utils/classNames';
@@ -6,6 +6,7 @@ import { ArrowLeft, MailCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ChangeEvent, FormEvent } from 'react';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CODE_LENGTH = 6;
 const COOLDOWN_SECONDS = 60;
@@ -13,6 +14,7 @@ const COOLDOWN_SECONDS = 60;
 function VerifyOtpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { verifyOtp, signInWithOtp } = useAuth();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [cooldown, setCooldown] = useState(0);
@@ -23,7 +25,6 @@ function VerifyOtpContent() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const isComplete = code.length === CODE_LENGTH;
-  // Removed progress calculation; we only show simple countdown text now
 
   const startCooldown = useCallback((seconds: number) => {
     if (timerRef.current) {
@@ -57,7 +58,6 @@ function VerifyOtpContent() {
   useEffect(() => {
     if (emailParam) {
       setEmail(emailParam);
-      // Removed initial status copy per design: no "We sent a 6-digit code to ..."
     }
   }, [emailParam]);
 
@@ -102,15 +102,11 @@ function VerifyOtpContent() {
       setError(null);
       setStatus(null);
 
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
-      });
+      const { data, error: verifyError } = await verifyOtp(email, code);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || 'Invalid or expired code.');
+      if (verifyError) {
+        console.error('OTP verification error:', verifyError);
+        throw new Error(verifyError.message || 'Invalid or expired code.');
       }
 
       setStatus('Email verified! Taking you to your profile setup...');
@@ -135,15 +131,11 @@ function VerifyOtpContent() {
       setStatus('Sending a fresh code to your inbox...');
       setCode('');
 
-      const res = await fetch('/api/auth/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+      const { data, error: resendError } = await signInWithOtp(email);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || 'Failed to resend the code. Please try again.');
+      if (resendError) {
+        console.error('OTP resend error:', resendError);
+        throw new Error(resendError.message || 'Failed to resend the code. Please try again.');
       }
 
       startCooldown(COOLDOWN_SECONDS);

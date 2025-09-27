@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zenlit V3
+
+A modern social networking application built with Next.js and Supabase. Zenlit V3 brings enhanced features and improved user experience to the Zenlit platform.
 
 ## Getting Started
 
