@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
-import { Camera, X, Check, Save, Upload, Edit, Instagram, Trash2 } from 'lucide-react';
+import { Camera, X, Check, Save, Upload, Edit, Instagram, Trash2, ArrowLeft } from 'lucide-react';
 import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
 import Image from 'next/image';
 
@@ -169,7 +169,18 @@ export default function CompleteProfileOnboardingPage() {
       <div className="bg-black min-h-screen">
         {/* Header */}
         <div className="max-w-4xl mx-auto px-4">
-          <AppHeader title="Complete your profile" />
+          <AppHeader 
+            title="Complete your profile"
+            left={(
+              <button
+                onClick={() => router.back()}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </button>
+            )}
+          />
         </div>
 
         {/* Success Message */}
@@ -359,7 +370,7 @@ export default function CompleteProfileOnboardingPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          Instagram Link
+                          Instagram
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
                           {socialLinks.instagram || 'No link added'}
@@ -383,12 +394,12 @@ export default function CompleteProfileOnboardingPage() {
                      style={{ boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)', background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)' }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-start gap-4 flex-1">
-                      <div className="w-12 h-10 rounded-lg bg-black border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 rounded-lg bg-black border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
                         <FaXTwitter className="w-6 h-6 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          X Link
+                          X
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
                           {socialLinks.twitter || 'No link added'}
@@ -417,7 +428,7 @@ export default function CompleteProfileOnboardingPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          LinkedIn Link
+                          LinkedIn
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
                           {socialLinks.linkedin || 'No link added'}
@@ -521,12 +532,12 @@ export default function CompleteProfileOnboardingPage() {
                         <Instagram className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        Instagram Link
+                        Instagram
                       </h3>
                     </div>
                     <button
                       type="button"
-                      aria-label="Remove Instagram Link"
+                      aria-label="Remove Instagram"
                       onClick={() => { setSocialLinks(prev => ({ ...prev, instagram: '' })); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
@@ -585,12 +596,12 @@ export default function CompleteProfileOnboardingPage() {
                         <FaXTwitter className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        X Link
+                        X
                       </h3>
                     </div>
                     <button
                       type="button"
-                      aria-label="Remove X Link"
+                      aria-label="Remove X"
                       onClick={() => { setSocialLinks(prev => ({ ...prev, twitter: '' })); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
@@ -649,12 +660,12 @@ export default function CompleteProfileOnboardingPage() {
                         <FaLinkedin className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        LinkedIn Link
+                        LinkedIn
                       </h3>
                     </div>
                     <button
                       type="button"
-                      aria-label="Remove LinkedIn Link"
+                      aria-label="Remove LinkedIn"
                       onClick={() => { setSocialLinks(prev => ({ ...prev, linkedin: '' })); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >

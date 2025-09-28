@@ -136,10 +136,10 @@ export default function BasicProfileSetup() {
               onClick={handleContinue}
               disabled={!canContinue}
               className={mergeClassNames(
-                'mt-8 inline-flex w-full items-center justify-center rounded-xl px-5 py-3 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-60',
-                hasAnyInput
-                  ? 'bg-blue-600 hover:bg-blue-600/95 shadow-[0_20px_45px_-18px_rgba(37,99,235,0.55)]'
-                  : 'bg-slate-800 text-slate-400'
+                'mt-8 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-60 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] text-white',
+                canContinue
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800'
+                  : 'bg-slate-700/60 text-slate-300'
               )}
             >
               Continue to next step

@@ -58,7 +58,7 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VI
               onClick={() => logNavigationIntent('twitter')}
               buttonClassName="hover:scale-110"
               containerClassName="w-6 h-6 sm:w-7 sm:h-7"
-              iconClassName="w-4 h-4 sm:w-5 sm:h-5"
+              iconClassName="w-5 h-5 sm:w-6 sm:h-6"
               ariaLabel="X (Twitter)"
             />
           )}

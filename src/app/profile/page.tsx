@@ -276,7 +276,7 @@ const ProfileScreen = () => {
                       onClick={() => console.log('Twitter clicked')}
                       buttonClassName="hover:scale-110"
                       containerClassName="w-8 h-8"
-                      iconClassName="w-4 h-4"
+                      iconClassName="w-5 h-5"
                       containerStyle={{ border: '1px solid #333' }}
                       ariaLabel="X (Twitter)"
                     />
