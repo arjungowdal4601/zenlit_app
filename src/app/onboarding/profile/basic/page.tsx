@@ -2,7 +2,7 @@
 
 import AppLayout from '@/components/AppLayout';
 import { mergeClassNames } from '@/utils/classNames';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ChangeEvent } from 'react';
 import { useMemo, useState } from 'react';
@@ -52,13 +52,9 @@ export default function BasicProfileSetup() {
             </button>
           </div>
 
-          <div className="mb-10 text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-800/70 bg-slate-900/60 px-4 py-2 text-sm text-slate-300">
-              <Sparkles className="h-4 w-4 text-blue-400" />
-              Step 1 of 2
-            </span>
+          <div className="mb-6 text-center">
             <h1
-              className="mt-6 text-4xl font-semibold tracking-tight"
+              className="text-4xl font-semibold tracking-tight"
               style={{
                 backgroundImage: 'linear-gradient(90deg, #2563eb 0%, #4f46e5 55%, #7e22ce 100%)',
                 WebkitBackgroundClip: 'text',

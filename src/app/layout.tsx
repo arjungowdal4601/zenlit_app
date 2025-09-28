@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { VisibilityProvider } from "@/contexts/VisibilityContext";
 import "./globals.css";
+import "../styles/animations.css";
 
 export const metadata: Metadata = {
   title: "Zenlit - Location Based Networking",

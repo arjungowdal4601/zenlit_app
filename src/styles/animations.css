@@ -1,0 +1,89 @@
+/* Enhanced Page Transition Animations */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .page-transition,
+  [data-page-transition] {
+    transition-duration: 0.2s !important;
+    transform: none !important;
+  }
+  
+  .page-transitioning * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .page-transition {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Performance optimizations */
+.page-transition {
+  contain: layout style paint;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Focus management during transitions */
+.page-transitioning {
+  pointer-events: none;
+}
+
+.page-transitioning [tabindex] {
+  visibility: hidden;
+}
+
+/* Smooth scrolling reset during transitions */
+.page-transitioning {
+  scroll-behavior: auto;
+}
+
+/* GPU acceleration hints */
+.page-transition * {
+  transform: translateZ(0);
+}
+
+/* Loading state accessibility */
+.page-transition[aria-busy="true"] {
+  cursor: wait;
+}
+
+/* Screen reader announcements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Touch-friendly interaction areas */
+@media (pointer: coarse) {
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+button, [role="button"], a {
+  transition: all 0.2s ease-out;
+}
+
+/* Focus indicators */
+button:focus-visible, 
+[role="button"]:focus-visible, 
+a:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
