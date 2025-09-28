@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Zenlit V3 - Enhanced Location Based Networking",
   description: "Connect with people nearby through our advanced location-based networking platform",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg"
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
