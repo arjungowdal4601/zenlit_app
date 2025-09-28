@@ -652,7 +652,7 @@ const EditProfilePage = () => {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Changes
+                    Save
                   </>
                 )}
               </button>

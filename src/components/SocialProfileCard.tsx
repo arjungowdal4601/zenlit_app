@@ -62,21 +62,21 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
           {/* Name and Username */}
           <div className="mb-1 max-w-[210px] sm:max-w-[280px]">
             <h3
-              className="text-white font-semibold text-base sm:text-lg truncate cursor-pointer"
+              className="text-white font-semibold text-base truncate cursor-pointer"
               style={{ fontFamily: 'var(--font-inter)' }}
               onClick={goToProfile}
             >
               {user.name}
             </h3>
             {user.username && (
-              <span className="text-gray-400 text-sm ml-1" style={{ fontFamily: 'var(--font-inter)' }}>@{user.username}</span>
+              <span className="text-gray-400 text-sm" style={{ fontFamily: 'var(--font-inter)' }}>@{user.username}</span>
             )}
           </div>
 
           {/* Bio - Flexible width extending to card end */}
           <div className="flex-1 pr-2">
             <p
-              className="text-white text-sm leading-tight overflow-hidden"
+              className="text-gray-100 text-base leading-tight overflow-hidden"
               style={{
                 fontFamily: 'var(--font-inter)',
                 display: '-webkit-box',

@@ -168,19 +168,31 @@ export default function CompleteProfileOnboardingPage() {
     <AppLayout>
       <div className="bg-black min-h-screen">
         {/* Header */}
-        <div className="max-w-4xl mx-auto px-4">
-          <AppHeader 
-            title="Complete your profile"
-            left={(
-              <button
-                onClick={() => router.back()}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                aria-label="Go back"
-              >
-                <ArrowLeft className="w-5 h-5 text-white" />
-              </button>
-            )}
-          />
+        <div className="max-w-4xl mx-auto px-4 pt-8">
+          <div className="mb-4 w-full">
+            <button
+              onClick={() => router.push('/onboarding/profile/basic')}
+              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+          </div>
+
+          <div className="mb-6 text-center">
+            <h1
+              className="text-4xl font-semibold tracking-tight"
+              style={{
+                backgroundImage: 'linear-gradient(90deg, #2563eb 0%, #4f46e5 55%, #7e22ce 100%)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                fontFamily: 'var(--font-inter)',
+              }}
+            >
+              Complete your profile
+            </h1>
+          </div>
         </div>
 
         {/* Success Message */}
@@ -327,7 +339,7 @@ export default function CompleteProfileOnboardingPage() {
           </div>
 
           {/* Form Fields */}
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 space-y-6 pb-8">
+          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto px-4 space-y-3 pb-8 mt-1.5">
               {/* Bio */}
               <div>
                 <label htmlFor="bio" className="block text-white font-medium mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
@@ -356,7 +368,7 @@ export default function CompleteProfileOnboardingPage() {
 
             {/* Social Links Section */}
             <div>
-              <label className="block text-white font-medium mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
+              <label className="block text-white font-medium mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
                 Social Links
               </label>
               <div className="space-y-4">
@@ -473,7 +485,7 @@ export default function CompleteProfileOnboardingPage() {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Changes
+                    Save
                   </>
                 )}
               </button>

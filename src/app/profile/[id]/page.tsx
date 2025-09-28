@@ -136,7 +136,7 @@ const OtherUserProfilePage = () => {
                       {user.name}
                     </h1>
                     {user.username && (
-                      <p className="text-gray-400 text-lg mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
+                      <p className="text-gray-400 text-sm mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
                         @{user.username}
                       </p>
                     )}
