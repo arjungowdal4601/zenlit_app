@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import SocialLinkButton from '@/components/SocialLinkButton';
-import { DEFAULT_VISIBLE_PLATFORMS, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
+import { DEFAULT_VISIBLE_PLATFORMS, ensureSocialUrl, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
 
 interface PostProps {
   id: string;
@@ -19,21 +19,19 @@ interface PostProps {
 }
 
 const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VISIBLE_PLATFORMS }: PostProps) => {
-  const logNavigationIntent = (platform: SocialPlatformId) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.info(`Navigate to ${platform}`);
-    }
-  };
+  const instagramUrl = ensureSocialUrl('instagram', author.socialLinks?.instagram);
+  const linkedinUrl = ensureSocialUrl('linkedin', author.socialLinks?.linkedin);
+  const twitterUrl = ensureSocialUrl('twitter', author.socialLinks?.twitter);
 
   return (
     <div className="mb-3 relative">
       {/* Social Links - Top Right */}
       {author.socialLinks && (
         <div className="absolute top-0 right-0 mt-2 flex items-center space-x-3">
-          {selectedAccounts.includes('instagram') && author.socialLinks.instagram && (
+          {selectedAccounts.includes('instagram') && instagramUrl && (
             <SocialLinkButton
               platform="instagram"
-              onClick={() => logNavigationIntent('instagram')}
+              href={instagramUrl}
               buttonClassName="hover:scale-110"
               containerClassName="w-6 h-6 sm:w-7 sm:h-7"
               iconClassName="w-5 h-5 sm:w-6 sm:h-6"
@@ -41,10 +39,10 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VI
             />
           )}
 
-          {selectedAccounts.includes('linkedin') && author.socialLinks.linkedin && (
+          {selectedAccounts.includes('linkedin') && linkedinUrl && (
             <SocialLinkButton
               platform="linkedin"
-              onClick={() => logNavigationIntent('linkedin')}
+              href={linkedinUrl}
               buttonClassName="hover:scale-110"
               containerClassName="w-6 h-6 sm:w-7 sm:h-7"
               iconClassName="w-5 h-5 sm:w-6 sm:h-6"
@@ -52,10 +50,10 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VI
             />
           )}
 
-          {selectedAccounts.includes('twitter') && author.socialLinks.twitter && (
+          {selectedAccounts.includes('twitter') && twitterUrl && (
             <SocialLinkButton
               platform="twitter"
-              onClick={() => logNavigationIntent('twitter')}
+              href={twitterUrl}
               buttonClassName="hover:scale-110"
               containerClassName="w-6 h-6 sm:w-7 sm:h-7"
               iconClassName="w-5 h-5 sm:w-6 sm:h-6"

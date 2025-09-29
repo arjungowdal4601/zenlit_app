@@ -6,18 +6,7 @@ import AppHeader from '@/components/AppHeader';
 import SocialProfileCard from '@/components/SocialProfileCard';
 import VisibilityControl from '@/components/VisibilityControl';
 import { useVisibility } from '@/contexts/VisibilityContext';
-import type { SocialLinks } from '@/constants/socialPlatforms';
 import { NEARBY_USERS } from '@/constants/nearbyUsers';
-
-interface NearbyUser {
-  id: string;
-  name: string;
-  username: string;
-  profilePhoto: string;
-  bio: string;
-  distance: string;
-  socialLinks: SocialLinks;
-}
 
 const RadarScreen = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -103,3 +92,4 @@ const RadarScreen = () => {
 };
 
 export default RadarScreen;
+

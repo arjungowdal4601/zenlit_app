@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
-import { ArrowLeft, Upload, X, Check, Paperclip } from 'lucide-react';
+import { ArrowLeft, X, Check, Paperclip } from 'lucide-react';
 
 const FeedbackPage = () => {
   const router = useRouter();
@@ -136,10 +137,13 @@ const FeedbackPage = () => {
             {/* Image Preview */}
             {imagePreview && (
               <div className="relative">
-                <img
+                <Image
                   src={imagePreview}
-                  alt="Preview"
+                  alt="Feedback attachment preview"
+                  width={800}
+                  height={512}
                   className="w-full max-h-64 object-cover rounded-xl border-2 border-white"
+                  unoptimized
                 />
                 <button
                   type="button"
@@ -193,6 +197,11 @@ const FeedbackPage = () => {
                   <Paperclip className="w-4 h-4" />
                   <span className="text-sm font-medium">Attach</span>
                 </button>
+                {selectedImage && (
+                  <p className="mt-2 text-xs text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                    <span className="font-medium text-gray-200">Attached:</span> {selectedImage.name} ({Math.round(selectedImage.size / 1024)} KB)
+                  </p>
+                )}
               </div>
               <textarea
                 id="feedback-text"
