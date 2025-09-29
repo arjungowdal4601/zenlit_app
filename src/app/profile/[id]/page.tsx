@@ -2,61 +2,74 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import SocialLinkButton from '@/components/SocialLinkButton';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
-import { NEARBY_USERS, type NearbyUser } from '@/constants/nearbyUsers';
-
-interface Post {
-  id: string;
-  content: string;
-  timestamp: string;
-  likes: number;
-  comments: number;
-}
+import { useEffect, useState } from 'react';
+import { 
+  fetchUserProfile, 
+  CompleteUserProfile, 
+  UserPost, 
+  getProfilePictureUrl, 
+  getBannerUrl, 
+  getSocialMediaLinks,
+  formatTimeAgo 
+} from '@/utils/profileData';
 
 const OtherUserProfilePage = () => {
   const params = useParams();
   const idParam = (params?.id ?? '') as string;
 
-  // Look up the user from the Radar list data
-  const user: NearbyUser | undefined = useMemo(
-    () => NEARBY_USERS.find((u) => u.id === idParam),
-    [idParam]
-  );
+  // State for user profile data
+  const [userProfile, setUserProfile] = useState<CompleteUserProfile | null>(null);
+  const [posts, setPosts] = useState<UserPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [socialLinks, setSocialLinks] = useState<{
+    instagram: string | null;
+    linkedin: string | null;
+    x_twitter: string | null;
+  }>({ instagram: null, linkedin: null, x_twitter: null });
 
-  const [posts] = useState<Post[]>([
-    {
-      id: '1',
-      content:
-        'Just finished working on an amazing new project! Excited to share more details soon. The journey of building something from scratch is always rewarding.',
-      timestamp: '2 hours ago',
-      likes: 24,
-      comments: 8,
-    },
-    {
-      id: '2',
-      content:
-        'Beautiful sunset today! Sometimes you need to step away from the screen and appreciate the simple things in life. Nature has a way of inspiring creativity.',
-      timestamp: '1 day ago',
-      likes: 45,
-      comments: 12,
-    },
-    {
-      id: '3',
-      content:
-        "Learning new technologies every day. The tech world moves fast, but that's what makes it exciting. Always stay curious and keep growing!",
-      timestamp: '3 days ago',
-      likes: 67,
-      comments: 23,
-    },
-  ]);
+  // Fetch user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!idParam) {
+        setError('Invalid user ID');
+        setLoading(false);
+        return;
+      }
 
-  // If user is not found, show a simple not found message with back to Radar
-  if (!user) {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const data = await fetchUserProfile(idParam);
+        
+        if (!data) {
+          setError('User not found');
+          setLoading(false);
+          return;
+        }
+
+        setUserProfile(data);
+        setPosts(data.posts);
+        setSocialLinks(getSocialMediaLinks(data.socialLinks));
+      } catch (err) {
+        console.error('Error loading user data:', err);
+        setError('Failed to load user profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, [idParam]);
+
+  // Loading state
+  if (loading) {
     return (
       <AppLayout>
         <div className="bg-black min-h-screen">
@@ -75,7 +88,42 @@ const OtherUserProfilePage = () => {
             />
           </div>
           <div className="max-w-2xl mx-auto px-4 py-12">
-            <p className="text-gray-300">User not found.</p>
+            <p className="text-gray-300">Loading profile...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Error state or user not found
+  if (error || !userProfile) {
+    return (
+      <AppLayout>
+        <div className="bg-black min-h-screen">
+          <div className="max-w-4xl mx-auto px-4">
+            <AppHeader
+              title="Profile"
+              left={
+                <Link
+                  href="/radar"
+                  aria-label="Back to Radar"
+                  className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <ArrowLeft className="text-white" />
+                </Link>
+              }
+            />
+          </div>
+          <div className="max-w-2xl mx-auto px-4 py-12">
+            <p className="text-gray-300">{error || 'User not found.'}</p>
+            {error && (
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Try Again
+              </button>
+            )}
           </div>
         </div>
       </AppLayout>
@@ -108,7 +156,9 @@ const OtherUserProfilePage = () => {
             <div
               className="h-48 sm:h-64"
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: getBannerUrl(userProfile.socialLinks) 
+                  ? `url(${getBannerUrl(userProfile.socialLinks)}) center/cover` 
+                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
               }}
             ></div>
 
@@ -121,8 +171,8 @@ const OtherUserProfilePage = () => {
                   {/* Profile Photo - square with rounded corners */}
                   <div className="relative -mt-12 sm:-mt-16 mb-4">
                     <Image
-                      src={user.profilePhoto}
-                      alt={`${user.name}'s profile`}
+                      src={getProfilePictureUrl(userProfile.socialLinks)}
+                      alt={`${userProfile.profile.display_name || userProfile.profile.user_name}'s profile`}
                       width={120}
                       height={120}
                       className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg object-cover border-4 border-black"
@@ -133,58 +183,50 @@ const OtherUserProfilePage = () => {
                   {/* User Info - Display name and username below profile pic */}
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-inter)' }}>
-                      {user.name}
+                      {userProfile.profile.display_name || userProfile.profile.user_name}
                     </h1>
-                    {user.username && (
-                      <p className="text-gray-400 text-sm mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
-                        @{user.username}
-                      </p>
-                    )}
+                    <p className="text-gray-400 text-sm mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
+                      @{userProfile.profile.user_name}
+                    </p>
                   </div>
                 </div>
 
                 {/* Right Side: Social Links */}
-                <div className="flex items-center space-x-3 pt-2">
-                  {user.socialLinks?.instagram && (
-                    <SocialLinkButton
-                      platform="instagram"
-                      onClick={() => console.log('Instagram clicked')}
-                      buttonClassName="hover:scale-110"
-                      containerClassName="w-8 h-8"
-                      iconClassName="w-5 h-5"
-                      ariaLabel="Instagram"
-                    />
-                  )}
+                <div className="flex items-center space-x-1.5 pt-2">
+                  <SocialLinkButton
+                    platform="instagram"
+                    href={socialLinks.instagram ? `https://instagram.com/${socialLinks.instagram}` : undefined}
+                    buttonClassName={socialLinks.instagram ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    containerClassName="w-8 h-8"
+                    iconClassName="w-5 h-5"
+                    ariaLabel="Instagram"
+                  />
 
-                  {user.socialLinks?.linkedin && (
-                    <SocialLinkButton
-                      platform="linkedin"
-                      onClick={() => console.log('LinkedIn clicked')}
-                      buttonClassName="hover:scale-110"
-                      containerClassName="w-8 h-8"
-                      iconClassName="w-5 h-5"
-                      ariaLabel="LinkedIn"
-                    />
-                  )}
+                  <SocialLinkButton
+                    platform="linkedin"
+                    href={socialLinks.linkedin ? `https://linkedin.com/in/${socialLinks.linkedin}` : undefined}
+                    buttonClassName={socialLinks.linkedin ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    containerClassName="w-8 h-8"
+                    iconClassName="w-5 h-5"
+                    ariaLabel="LinkedIn"
+                  />
 
-                  {user.socialLinks?.twitter && (
-                    <SocialLinkButton
-                      platform="twitter"
-                      onClick={() => console.log('Twitter clicked')}
-                      buttonClassName="hover:scale-110"
-                      containerClassName="w-8 h-8"
-                      iconClassName="w-5 h-5"
-                      containerStyle={{ border: '1px solid #333' }}
-                      ariaLabel="X (Twitter)"
-                    />
-                  )}
+                  <SocialLinkButton
+                    platform="twitter"
+                    href={socialLinks.x_twitter ? `https://twitter.com/${socialLinks.x_twitter}` : undefined}
+                    buttonClassName={socialLinks.x_twitter ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    containerClassName="w-8 h-8"
+                    iconClassName="w-5 h-5"
+                    containerStyle={{ border: '1px solid #333' }}
+                    ariaLabel="X (Twitter)"
+                  />
                 </div>
               </div>
 
               {/* Bio - Full width below the profile section */}
               <div className="mt-4">
                 <p className="text-white text-base leading-relaxed max-w-2xl" style={{ fontFamily: 'var(--font-inter)' }}>
-                  {user.bio}
+                  {userProfile.socialLinks?.bio || 'No bio available'}
                 </p>
               </div>
             </div>
@@ -195,45 +237,50 @@ const OtherUserProfilePage = () => {
             <div className="border-t border-gray-700"></div>
           </div>
 
-          {/* Posts Section (READ-ONLY: no 3-dots menu, no delete) */}
-          <div className="mt-6 space-y-3 max-w-2xl mx-auto px-4">
-            <h2 className="text-xl font-semibold text-white mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
+          {/* Posts Section */}
+          <div className="bg-black rounded-lg border border-gray-800 p-6">
+            <h2 className="text-white text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
               Posts
             </h2>
+            
+            {posts.length === 0 ? (
+              <p className="text-gray-400 text-center py-8" style={{ fontFamily: 'var(--font-inter)' }}>
+                No posts yet
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {posts.map((post) => (
+                  <div key={post.id} className="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                    <div className="flex items-start space-x-3">
+                      {/* Author Profile Picture */}
+                      <div className="flex-shrink-0">
+                        <Image
+                          src={getProfilePictureUrl(userProfile.socialLinks)}
+                          alt={userProfile.profile.display_name || userProfile.profile.user_name}
+                          width={40}
+                          height={40}
+                          className="w-10 h-10 rounded-lg object-cover"
+                        />
+                      </div>
 
-            {posts.map((post) => (
-              <div key={post.id} className="mb-3 relative">
-                <div className="flex space-x-4">
-                  {/* Profile Picture */}
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={user.profilePhoto}
-                      alt={user.name}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
-                  </div>
+                      {/* Post Content */}
+                      <div className="flex-1 min-w-0">
+                        {/* Author Info - No timestamp */}
+                        <div className="mb-2">
+                          <h3 className="text-white font-semibold text-base">{userProfile.profile.display_name || userProfile.profile.user_name}</h3>
+                          <span className="text-gray-400 text-sm">@{userProfile.profile.user_name}</span>
+                        </div>
 
-                  {/* Post Content */}
-                  <div className="flex-1 min-w-0">
-                    {/* Author Info - No timestamp */}
-                    <div className="mb-2">
-                      <h3 className="text-white font-semibold text-base">{user.name}</h3>
-                      {user.username && <span className="text-gray-400 text-sm">@{user.username}</span>}
+                        {/* Post Text */}
+                        <p className="text-gray-300 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-inter)' }}>
+                          {post.content}
+                        </p>
+                      </div>
                     </div>
-
-                    {/* Post Text */}
-                    <p className="text-gray-100 text-base mb-4 leading-tight">{post.content}</p>
                   </div>
-                </div>
-
-                {/* Post separator */}
-                <div className="mt-2 mb-1">
-                  <div className="h-px bg-gray-600 w-full"></div>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

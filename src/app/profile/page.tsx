@@ -7,15 +7,15 @@ import AppHeader from '@/components/AppHeader';
 import LogoutConfirmation from '@/components/LogoutConfirmation';
 import SocialLinkButton from '@/components/SocialLinkButton';
 import Image from 'next/image';
-import { MoreHorizontal, Edit, MessageSquare, LogOut } from 'lucide-react';
-
-interface Post {
-  id: string;
-  content: string;
-  timestamp: string;
-  likes: number;
-  comments: number;
-}
+import { MoreHorizontal, Edit, MessageSquare, LogOut, FileText } from 'lucide-react';
+import { 
+  fetchCurrentUserProfile, 
+  CompleteUserProfile, 
+  UserPost,
+  getProfilePictureUrl,
+  getBannerUrl,
+  getSocialMediaLinks
+} from '@/utils/profileData';
 
 const ProfileScreen = () => {
   const router = useRouter();
@@ -24,45 +24,37 @@ const ProfileScreen = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [postMenuOpen, setPostMenuOpen] = useState<string | null>(null);
-  const [posts, setPosts] = useState<Post[]>([
-    {
-      id: '1',
-      content: 'Just finished working on an amazing new project! Excited to share more details soon. The journey of building something from scratch is always rewarding.',
-      timestamp: '2 hours ago',
-      likes: 24,
-      comments: 8
-    },
-    {
-      id: '2', 
-      content: 'Beautiful sunset today! Sometimes you need to step away from the screen and appreciate the simple things in life. Nature has a way of inspiring creativity.',
-      timestamp: '1 day ago',
-      likes: 45,
-      comments: 12
-    },
-    {
-      id: '3',
-      content: 'Learning new technologies every day. The tech world moves fast, but that\'s what makes it exciting. Always stay curious and keep growing!',
-      timestamp: '3 days ago',
-      likes: 67,
-      comments: 23
-    }
-  ]);
+  
+  // Real data states
+  const [userProfile, setUserProfile] = useState<CompleteUserProfile | null>(null);
+  const [posts, setPosts] = useState<UserPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // Mock user data
-  const user = {
-    name: 'Alex Johnson',
-    username: 'alexjohnson',
-    profilePhoto: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=b6e3f4',
-    bio: 'Software engineer passionate about AI and machine learning. Love hiking and exploring new technologies. Always up for a good conversation about tech trends and innovation.',
-    socialLinks: {
-      instagram: 'alexj_dev',
-      linkedin: 'alex-johnson-dev', 
-      twitter: 'alexjohnson_ai'
-    }
-  };
+  // Fetch user data on component mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchCurrentUserProfile();
+        if (data) {
+          setUserProfile(data);
+          setPosts(data.posts);
+        }
+      } catch (err) {
+        console.error('Error loading user data:', err);
+        setError('Failed to load profile data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   // Close dropdown on outside click and Escape key
   useEffect(() => {
@@ -129,6 +121,39 @@ const ProfileScreen = () => {
     }
     setDropdownOpen(false);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="bg-black min-h-screen flex items-center justify-center">
+          <div className="text-white text-lg">Loading profile...</div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Error state
+  if (error || !userProfile) {
+    return (
+      <AppLayout>
+        <div className="bg-black min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-red-400 text-lg mb-4">{error || 'Profile not found'}</div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Get social media links with proper structure
+  const socialLinks = getSocialMediaLinks(userProfile.socialLinks);
 
   return (
     <AppLayout>
@@ -213,7 +238,9 @@ const ProfileScreen = () => {
             <div 
               className="h-48 sm:h-64"
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                background: getBannerUrl(userProfile.socialLinks) 
+                  ? `url(${getBannerUrl(userProfile.socialLinks)}) center/cover` 
+                  : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
               }}
             ></div>
 
@@ -226,8 +253,8 @@ const ProfileScreen = () => {
                   {/* Profile Photo - square with rounded corners */}
                   <div className="relative -mt-12 sm:-mt-16 mb-4">
                     <Image
-                      src={user.profilePhoto}
-                      alt={`${user.name}'s profile`}
+                      src={getProfilePictureUrl(userProfile.socialLinks)}
+                      alt={`${userProfile.profile.display_name || userProfile.profile.user_name}'s profile`}
                       width={120}
                       height={120}
                       className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg object-cover border-4 border-black"
@@ -238,56 +265,50 @@ const ProfileScreen = () => {
                   {/* User Info - Display name and username below profile pic */}
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-inter)' }}>
-                      {user.name}
+                      {userProfile.profile.display_name || userProfile.profile.user_name}
                     </h1>
                     <p className="text-gray-400 text-sm mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
-                      @{user.username}
+                      @{userProfile.profile.user_name}
                     </p>
                   </div>
                 </div>
 
                 {/* Right Side: Social Links */}
-                <div className="flex items-center space-x-3 pt-2">
-                  {user.socialLinks?.instagram && (
-                    <SocialLinkButton
-                      platform="instagram"
-                      onClick={() => console.log('Instagram clicked')}
-                      buttonClassName="hover:scale-110"
-                      containerClassName="w-8 h-8"
-                      iconClassName="w-5 h-5"
-                      ariaLabel="Instagram"
-                    />
-                  )}
+                <div className="flex items-center space-x-1.5 pt-2">
+                  <SocialLinkButton
+                    platform="instagram"
+                    href={socialLinks.instagram ? `https://instagram.com/${socialLinks.instagram}` : undefined}
+                    buttonClassName={socialLinks.instagram ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    containerClassName="w-8 h-8"
+                    iconClassName="w-5 h-5"
+                    ariaLabel="Instagram"
+                  />
 
-                  {user.socialLinks?.linkedin && (
-                    <SocialLinkButton
-                      platform="linkedin"
-                      onClick={() => console.log('LinkedIn clicked')}
-                      buttonClassName="hover:scale-110"
-                      containerClassName="w-8 h-8"
-                      iconClassName="w-5 h-5"
-                      ariaLabel="LinkedIn"
-                    />
-                  )}
+                  <SocialLinkButton
+                    platform="linkedin"
+                    href={socialLinks.linkedin ? `https://linkedin.com/in/${socialLinks.linkedin}` : undefined}
+                    buttonClassName={socialLinks.linkedin ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    containerClassName="w-8 h-8"
+                    iconClassName="w-5 h-5"
+                    ariaLabel="LinkedIn"
+                  />
 
-                  {user.socialLinks?.twitter && (
-                    <SocialLinkButton
-                      platform="twitter"
-                      onClick={() => console.log('Twitter clicked')}
-                      buttonClassName="hover:scale-110"
-                      containerClassName="w-8 h-8"
-                      iconClassName="w-5 h-5"
-                      containerStyle={{ border: '1px solid #333' }}
-                      ariaLabel="X (Twitter)"
-                    />
-                  )}
+                  <SocialLinkButton
+                    platform="twitter"
+                    href={socialLinks.x_twitter ? `https://twitter.com/${socialLinks.x_twitter}` : undefined}
+                    buttonClassName={socialLinks.x_twitter ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    containerClassName="w-8 h-8"
+                    iconClassName="w-5 h-5"
+                    containerStyle={{ border: '1px solid #333' }}
+                    ariaLabel="X (Twitter)"
+                  />
                 </div>
               </div>
 
               {/* Bio - Full width below the profile section */}
               <div className="mt-4">
                 <p className="text-white text-base leading-relaxed max-w-2xl" style={{ fontFamily: 'var(--font-inter)' }}>
-                  {user.bio}
+                  {userProfile.socialLinks?.bio || 'No bio available.'}
                 </p>
               </div>
             </div>
@@ -304,64 +325,83 @@ const ProfileScreen = () => {
               Posts
             </h2>
             
-            {posts.map((post) => (
-              <div key={post.id} className="mb-3 relative">
-                {/* 3-dots menu - Top Right */}
-                <div className="absolute top-0 right-0 mt-2">
-                  <button
-                    onClick={() => togglePostMenu(post.id)}
-                    className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-                    aria-label="Post options"
-                  >
-                    <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                  </button>
-                  
-                  {/* Dropdown Menu */}
-                  {postMenuOpen === post.id && (
-                    <div className="absolute right-0 mt-1 bg-gray-900 rounded-lg border border-gray-700 py-1 z-10 min-w-[120px]">
-                      <button
-                        onClick={() => handleDeletePost(post.id)}
-                        className="w-full text-left px-3 py-2 text-red-400 hover:bg-gray-800 transition-colors text-sm"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+            {posts.length === 0 ? (
+              /* Empty Posts Placeholder */
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="relative mb-6">
+                  <FileText className="w-16 h-16 text-gray-600" />
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">
+                    <span className="text-gray-400 text-xs">0</span>
+                  </div>
                 </div>
-                
-                <div className="flex space-x-4">
-                  {/* Profile Picture */}
-                  <div className="flex-shrink-0">
-                    <Image
-                      src={user.profilePhoto}
-                      alt={user.name}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-lg object-cover"
-                    />
+                <h3 className="text-gray-400 text-lg font-medium mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
+                  No posts yet
+                </h3>
+                <p className="text-gray-500 text-sm text-center max-w-xs" style={{ fontFamily: 'var(--font-inter)' }}>
+                  Share your thoughts and experiences with the community. Your first post is just a click away!
+                </p>
+                <div className="mt-6 w-full max-w-xs h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+              </div>
+            ) : (
+              posts.map((post) => (
+                <div key={post.id} className="mb-3 relative">
+                  {/* 3-dots menu - Top Right */}
+                  <div className="absolute top-0 right-0 mt-2">
+                    <button
+                      onClick={() => togglePostMenu(post.id)}
+                      className="p-1 hover:bg-gray-800 rounded-full transition-colors"
+                      aria-label="Post options"
+                    >
+                      <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {postMenuOpen === post.id && (
+                      <div className="absolute right-0 mt-1 bg-gray-900 rounded-lg border border-gray-700 py-1 z-10 min-w-[120px]">
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="w-full text-left px-3 py-2 text-red-400 hover:bg-gray-800 transition-colors text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </div>
                   
-                  {/* Post Content */}
-                  <div className="flex-1 min-w-0">
-                    {/* Author Info - No timestamp */}
-                    <div className="mb-2">
-                      <h3 className="text-white font-semibold text-base">{user.name}</h3>
-                      <span className="text-gray-400 text-sm">@{user.username}</span>
+                  <div className="flex space-x-4">
+                    {/* Profile Picture */}
+                    <div className="flex-shrink-0">
+                      <Image
+                        src={getProfilePictureUrl(userProfile.socialLinks)}
+                        alt={userProfile.profile.display_name || userProfile.profile.user_name}
+                        width={40}
+                        height={40}
+                        className="w-10 h-10 rounded-lg object-cover"
+                      />
                     </div>
                     
-                    {/* Post Text */}
-                    <p className="text-gray-100 text-base mb-4 leading-tight">
-                      {post.content}
-                    </p>
+                    {/* Post Content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Author Info - No timestamp */}
+                      <div className="mb-2">
+                        <h3 className="text-white font-semibold text-base">{userProfile.profile.display_name || userProfile.profile.user_name}</h3>
+                        <span className="text-gray-400 text-sm">@{userProfile.profile.user_name}</span>
+                      </div>
+                      
+                      {/* Post Text */}
+                      <p className="text-gray-100 text-base mb-4 leading-tight">
+                        {post.content}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Post separator */}
+                  <div className="mt-2 mb-1">
+                    <div className="h-px bg-gray-600 w-full"></div>
                   </div>
                 </div>
-                
-                {/* Post separator */}
-                <div className="mt-2 mb-1">
-                  <div className="h-px bg-gray-600 w-full"></div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 

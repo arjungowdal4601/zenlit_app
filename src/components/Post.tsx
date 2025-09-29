@@ -21,7 +21,7 @@ interface PostProps {
 const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VISIBLE_PLATFORMS }: PostProps) => {
   const instagramUrl = ensureSocialUrl('instagram', author.socialLinks?.instagram);
   const linkedinUrl = ensureSocialUrl('linkedin', author.socialLinks?.linkedin);
-  const twitterUrl = ensureSocialUrl('twitter', author.socialLinks?.twitter);
+  const twitterUrl = ensureSocialUrl('twitter', author.socialLinks?.x_twitter);
 
   return (
     <div className="mb-3 relative">

@@ -4,7 +4,11 @@ import { FaXTwitter } from 'react-icons/fa6';
 
 export type SocialPlatformId = 'instagram' | 'linkedin' | 'twitter';
 
-export type SocialLinks = Partial<Record<SocialPlatformId, string>>;
+export type SocialLinks = {
+  instagram?: string | null;
+  linkedin?: string | null;
+  x_twitter?: string | null;
+};
 
 type IconRenderer = (className?: string) => ReactElement;
 
@@ -54,7 +58,7 @@ export const SOCIAL_PLATFORMS: Record<SocialPlatformId, SocialPlatformMeta> = {
     id: 'twitter',
     label: 'X (Twitter)',
     style: {
-      background: '#000000',
+      background: '#6b7280',
     },
     wrapperClassName: 'flex items-center justify-center rounded-sm',
     iconClassName: 'text-white',

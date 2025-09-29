@@ -31,7 +31,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
 
   const instagramUrl = ensureSocialUrl('instagram', user.socialLinks?.instagram);
   const linkedinUrl = ensureSocialUrl('linkedin', user.socialLinks?.linkedin);
-  const twitterUrl = ensureSocialUrl('twitter', user.socialLinks?.twitter);
+  const twitterUrl = ensureSocialUrl('twitter', user.socialLinks?.x_twitter);
 
   const goToProfile = () => {
     // Navigate to other user's profile page
@@ -93,7 +93,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
       {/* Bottom: Social media buttons left, action buttons right */}
       <div className="mt-3 flex items-center justify-between">
         {/* Social Media Buttons with original brand colors */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-1.5">
           {selectedAccounts.includes('instagram') && instagramUrl && (
             <SocialLinkButton
               platform="instagram"
