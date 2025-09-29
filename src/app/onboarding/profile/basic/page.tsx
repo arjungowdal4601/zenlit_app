@@ -24,7 +24,6 @@ export default function BasicProfileSetup() {
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   const canContinue = Boolean(displayName.trim() && username.trim() && dob && gender);
-  const hasAnyInput = Boolean(displayName.trim() || username.trim() || dob || gender);
 
   const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const nextValue = event.target.value.replace(/[^a-zA-Z0-9._]/g, '').toLowerCase();
@@ -150,3 +149,4 @@ export default function BasicProfileSetup() {
     </AppLayout>
   );
 }
+

@@ -1,10 +1,8 @@
 'use client';
-import { useRouter } from 'next/navigation';
 import { useAnimatedRouter } from './PageTransition';
 import { useState } from 'react';
 
 export default function GetStarted() {
-  const router = useRouter();
   const { animatedPush, isNavigating } = useAnimatedRouter();
   const [isClicked, setIsClicked] = useState(false);
 
@@ -58,3 +56,4 @@ export default function GetStarted() {
     </div>
   );
 }
+

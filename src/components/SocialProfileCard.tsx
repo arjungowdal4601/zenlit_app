@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { MessageSquare, User } from 'lucide-react';
 import SocialLinkButton from '@/components/SocialLinkButton';
-import { DEFAULT_VISIBLE_PLATFORMS, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
+import { DEFAULT_VISIBLE_PLATFORMS, ensureSocialUrl, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
 import { useRouter } from 'next/navigation';
 
 interface SocialProfileCardProps {
@@ -29,11 +29,9 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
   const shouldTruncate = user.bio.length > maxBioLength;
   const displayBio = shouldTruncate ? `${user.bio.substring(0, maxBioLength)}...` : user.bio;
 
-  const logNavigationIntent = (platform: SocialPlatformId | 'profile' | 'message') => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.info(`Navigate to ${platform}`);
-    }
-  };
+  const instagramUrl = ensureSocialUrl('instagram', user.socialLinks?.instagram);
+  const linkedinUrl = ensureSocialUrl('linkedin', user.socialLinks?.linkedin);
+  const twitterUrl = ensureSocialUrl('twitter', user.socialLinks?.twitter);
 
   const goToProfile = () => {
     // Navigate to other user's profile page
@@ -96,10 +94,10 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
       <div className="mt-3 flex items-center justify-between">
         {/* Social Media Buttons with original brand colors */}
         <div className="flex items-center space-x-3">
-          {selectedAccounts.includes('instagram') && user.socialLinks?.instagram && (
+          {selectedAccounts.includes('instagram') && instagramUrl && (
             <SocialLinkButton
               platform="instagram"
-              onClick={() => logNavigationIntent('instagram')}
+              href={instagramUrl}
               buttonClassName="hover:scale-110"
               containerClassName="w-6 h-6 sm:w-7 sm:h-7"
               iconClassName="w-5 h-5 sm:w-6 sm:h-6"
@@ -107,10 +105,10 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
             />
           )}
 
-          {selectedAccounts.includes('linkedin') && user.socialLinks?.linkedin && (
+          {selectedAccounts.includes('linkedin') && linkedinUrl && (
             <SocialLinkButton
               platform="linkedin"
-              onClick={() => logNavigationIntent('linkedin')}
+              href={linkedinUrl}
               buttonClassName="hover:scale-110"
               containerClassName="w-6 h-6 sm:w-7 sm:h-7"
               iconClassName="w-5 h-5 sm:w-6 sm:h-6"
@@ -118,10 +116,10 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
             />
           )}
 
-          {selectedAccounts.includes('twitter') && user.socialLinks?.twitter && (
+          {selectedAccounts.includes('twitter') && twitterUrl && (
             <SocialLinkButton
               platform="twitter"
-              onClick={() => logNavigationIntent('twitter')}
+              href={twitterUrl}
               buttonClassName="hover:scale-110"
               containerClassName="w-6 h-6 sm:w-7 sm:h-7"
               iconClassName="w-5 h-5 sm:w-6 sm:h-6"
@@ -143,7 +141,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
 
           <button
             type="button"
-            onClick={() => logNavigationIntent('message')}
+            onClick={() => router.push('/messages')}
             className="h-10 w-10 sm:h-12 sm:w-12 grid place-items-center rounded-md text-white hover:text-gray-300 transition-colors"
             aria-label="Send Message"
           >
@@ -156,3 +154,4 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
 });
 
 export default SocialProfileCard;
+

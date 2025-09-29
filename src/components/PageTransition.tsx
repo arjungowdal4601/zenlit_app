@@ -15,21 +15,16 @@ export default function PageTransition({
   direction = 'right' 
 }: PageTransitionProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [isExiting, setIsExiting] = useState(false);
-  const [animationPhase, setAnimationPhase] = useState<'entering' | 'visible' | 'exiting'>('entering');
   const pathname = usePathname();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Reset states when pathname changes
-    setIsExiting(false);
+    // Reset state when pathname changes
     setIsVisible(false);
-    setAnimationPhase('entering');
     
     // Trigger entrance animation with staggered timing for smoother effect
     const timer = setTimeout(() => {
       setIsVisible(true);
-      setAnimationPhase('visible');
     }, 100);
 
     return () => clearTimeout(timer);
@@ -83,8 +78,8 @@ export default function PageTransition({
       aria-busy={!isVisible}
       aria-live="polite"
       style={{
-        transform: isVisible && !isExiting ? transforms.visible : transforms.enter,
-        opacity: isVisible && !isExiting ? 1 : 0,
+        transform: isVisible ? transforms.visible : transforms.enter,
+        opacity: isVisible ? 1 : 0,
         willChange: 'transform, opacity',
         backfaceVisibility: 'hidden',
         perspective: '1000px',
@@ -93,7 +88,7 @@ export default function PageTransition({
       <div 
         className="w-full h-full"
         style={{
-          transform: `scale(${isVisible && !isExiting ? 1 : 0.98})`,
+          transform: `scale(${isVisible ? 1 : 0.98})`,
           transition: 'transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94)',
           transformOrigin: 'center center',
         }}
@@ -169,3 +164,4 @@ export function useAnimatedRouter() {
     exitDirection 
   };
 }
+

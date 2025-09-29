@@ -65,3 +65,21 @@ export const SOCIAL_PLATFORMS: Record<SocialPlatformId, SocialPlatformMeta> = {
 export const SOCIAL_PLATFORM_IDS: SocialPlatformId[] = Object.keys(SOCIAL_PLATFORMS) as SocialPlatformId[];
 
 export const DEFAULT_VISIBLE_PLATFORMS: SocialPlatformId[] = [...SOCIAL_PLATFORM_IDS];
+const SOCIAL_URL_BASE: Record<SocialPlatformId, string> = {
+  instagram: 'https://instagram.com/',
+  linkedin: 'https://linkedin.com/in/',
+  twitter: 'https://x.com/',
+};
+
+const HAS_PROTOCOL = /^https?:\/\//i;
+
+export const ensureSocialUrl = (platform: SocialPlatformId, value?: string | null) => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (HAS_PROTOCOL.test(trimmed)) {
+    return trimmed;
+  }
+  const normalised = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed;
+  return `${SOCIAL_URL_BASE[platform]}${normalised}`;
+};
