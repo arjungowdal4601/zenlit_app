@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
@@ -12,6 +11,7 @@ const FeedbackPage = () => {
   const router = useRouter();
   const [feedbackText, setFeedbackText] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<{ feedbackText?: string }>({});
@@ -37,11 +37,13 @@ const FeedbackPage = () => {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+      setSelectedImage(file);
     }
   };
 
   const removeImage = () => {
     setImagePreview(null);
+    setSelectedImage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -136,9 +138,6 @@ const FeedbackPage = () => {
               <div className="relative">
                 <Image
                   src={imagePreview}
-                  alt="Preview"
-                  width={800}
-                  height={450}
                   alt="Feedback attachment preview"
                   width={800}
                   height={512}
