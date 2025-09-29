@@ -62,6 +62,7 @@ const EditProfilePage = () => {
     router.push('/profile');
   };
 
+
   // Ensure only one menu is open at a time
   useEffect(() => {
     if (showBannerMenu) setShowProfileMenu(false);
@@ -435,7 +436,7 @@ const EditProfilePage = () => {
                       {/* Title and Link */}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          Instagram Link
+                          Instagram
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
                           {socialLinks.instagram || 'No link added'}
@@ -449,6 +450,7 @@ const EditProfilePage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setIsSubmitting(false);
+                       
                         setTempSocialInput(socialLinks.instagram);
                         setModalStates(prev => ({ ...prev, instagram: true }));
                       }}
@@ -471,14 +473,14 @@ const EditProfilePage = () => {
                     {/* Left side: Logo and content */}
                     <div className="flex items-start gap-4 flex-1">
                       {/* X Logo - Larger */}
-                      <div className="w-12 h-10 rounded-lg bg-black border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 rounded-lg bg-black border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
                         <FaXTwitter className="w-6 h-6 text-white" />
                       </div>
                       
                       {/* Title and Link */}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          X Link
+                          X
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
                           {socialLinks.twitter || 'No link added'}
@@ -492,6 +494,7 @@ const EditProfilePage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setIsSubmitting(false);
+
                         setTempSocialInput(socialLinks.twitter);
                         setModalStates(prev => ({ ...prev, x: true }));
                       }}
@@ -521,7 +524,7 @@ const EditProfilePage = () => {
                       {/* Title and Link */}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                          LinkedIn Link
+                          LinkedIn
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
                           {socialLinks.linkedin || 'No link added'}
@@ -535,6 +538,7 @@ const EditProfilePage = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         setIsSubmitting(false);
+
                         setTempSocialInput(socialLinks.linkedin);
                         setModalStates(prev => ({ ...prev, linkedin: true }));
                       }}
@@ -573,7 +577,7 @@ const EditProfilePage = () => {
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Changes
+                    Save
                   </>
                 )}
               </button>
@@ -633,12 +637,12 @@ const EditProfilePage = () => {
                         <Instagram className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        Instagram Link
+                        Instagram
                       </h3>
                     </div>
                     <button
                       type="button"
-                      aria-label="Remove Instagram Link"
+                      aria-label="Remove Instagram"
                       onClick={() => {
                         setSocialLinks(prev => ({ ...prev, instagram: '' }));
                         setModalStates(prev => ({ ...prev, instagram: false }));
@@ -711,12 +715,12 @@ const EditProfilePage = () => {
                         <FaXTwitter className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        X Link
+                        X
                       </h3>
                     </div>
                     <button
                       type="button"
-                      aria-label="Remove X Link"
+                      aria-label="Remove X"
                       onClick={() => {
                         setSocialLinks(prev => ({ ...prev, twitter: '' }));
                         setModalStates(prev => ({ ...prev, x: false }));
@@ -789,12 +793,12 @@ const EditProfilePage = () => {
                         <FaLinkedin className="w-6 h-6 text-white" />
                       </div>
                       <h3 className="text-white font-semibold text-lg" style={{ fontFamily: 'var(--font-inter)' }}>
-                        LinkedIn Link
+                        LinkedIn
                       </h3>
                     </div>
                     <button
                       type="button"
-                      aria-label="Remove LinkedIn Link"
+                      aria-label="Remove LinkedIn"
                       onClick={() => {
                         setSocialLinks(prev => ({ ...prev, linkedin: '' }));
                         setModalStates(prev => ({ ...prev, linkedin: false }));
@@ -855,3 +859,4 @@ const EditProfilePage = () => {
 };
 
 export default EditProfilePage;
+

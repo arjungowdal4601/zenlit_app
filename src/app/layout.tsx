@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { VisibilityProvider } from "@/contexts/VisibilityContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
+import "../styles/animations.css";
 
 export const metadata: Metadata = {
   title: "Zenlit V3 - Enhanced Location Based Networking",

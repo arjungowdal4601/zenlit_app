@@ -4,9 +4,10 @@ interface AppHeaderProps {
   title: string;
   left?: React.ReactNode;
   right?: React.ReactNode;
+  showDivider?: boolean;
 }
 
-const AppHeader = ({ title, left, right }: AppHeaderProps) => {
+const AppHeader = ({ title, left, right, showDivider = true }: AppHeaderProps) => {
   return (
     <div>
       <div className="flex items-center justify-between pt-4 pb-2">
@@ -26,7 +27,7 @@ const AppHeader = ({ title, left, right }: AppHeaderProps) => {
         </div>
         {right && <div className="flex items-center space-x-4">{right}</div>}
       </div>
-      <hr className="border-t border-gray-600 mb-6" />
+      {showDivider && <hr className="border-t border-gray-600 mb-6" />}
     </div>
   );
 };

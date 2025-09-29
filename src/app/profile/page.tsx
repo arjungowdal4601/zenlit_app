@@ -240,7 +240,7 @@ const ProfileScreen = () => {
                     <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1" style={{ fontFamily: 'var(--font-inter)' }}>
                       {user.name}
                     </h1>
-                    <p className="text-gray-400 text-lg mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
+                    <p className="text-gray-400 text-sm mb-3" style={{ fontFamily: 'var(--font-inter)' }}>
                       @{user.username}
                     </p>
                   </div>
@@ -276,7 +276,7 @@ const ProfileScreen = () => {
                       onClick={() => console.log('Twitter clicked')}
                       buttonClassName="hover:scale-110"
                       containerClassName="w-8 h-8"
-                      iconClassName="w-4 h-4"
+                      iconClassName="w-5 h-5"
                       containerStyle={{ border: '1px solid #333' }}
                       ariaLabel="X (Twitter)"
                     />

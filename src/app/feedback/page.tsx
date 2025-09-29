@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
@@ -138,6 +139,9 @@ const FeedbackPage = () => {
                   alt="Preview"
                   width={800}
                   height={450}
+                  alt="Feedback attachment preview"
+                  width={800}
+                  height={512}
                   className="w-full max-h-64 object-cover rounded-xl border-2 border-white"
                   unoptimized
                 />
@@ -193,6 +197,11 @@ const FeedbackPage = () => {
                   <Paperclip className="w-4 h-4" />
                   <span className="text-sm font-medium">Attach</span>
                 </button>
+                {selectedImage && (
+                  <p className="mt-2 text-xs text-gray-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                    <span className="font-medium text-gray-200">Attached:</span> {selectedImage.name} ({Math.round(selectedImage.size / 1024)} KB)
+                  </p>
+                )}
               </div>
               <textarea
                 id="feedback-text"

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 
 interface ChatHeaderProps {
   title: string;
@@ -13,6 +13,7 @@ interface ChatHeaderProps {
 
 const ChatHeader = ({ title, subtitle, avatarUrl, anonymous: _anonymous }: ChatHeaderProps) => {
   void _anonymous;
+
   return (
     <div className="sticky top-0 z-50 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60 border-b border-slate-800">
       <div className="max-w-2xl mx-auto px-4">
@@ -27,9 +28,17 @@ const ChatHeader = ({ title, subtitle, avatarUrl, anonymous: _anonymous }: ChatH
             </Link>
 
             <div className="flex items-center gap-3">
-              {avatarUrl && (
+              {avatarUrl ? (
                 <div className="relative w-10 h-10 rounded-xl overflow-hidden border border-slate-800 bg-slate-900">
                   <Image src={avatarUrl} alt={title} fill className="object-cover" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-xl border border-slate-800 bg-slate-900 flex items-center justify-center">
+                  {anonymous ? (
+                    <Eye className="text-gray-300" size={20} />
+                  ) : (
+                    <span className="text-white text-sm font-medium">{fallbackInitial}</span>
+                  )}
                 </div>
               )}
               <div>

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
+import PageTransition, { useAnimatedRouter } from '@/components/PageTransition';
 import { FcGoogle } from 'react-icons/fc';
 import { useState } from 'react';
 import { mergeClassNames } from '@/utils/classNames';
@@ -9,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignInPage() {
   const router = useRouter();
+
   const { signInWithGoogle, signInWithOtp } = useAuth();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,25 +57,34 @@ export default function SignInPage() {
     }
   };
 
+  const handleSignUpClick = () => {
+    // Smooth swipe animation to the right for sign-up flow
+    animatedPush('/auth/signup', { 
+      direction: 'left', 
+      duration: 400 
+    });
+  };
+
   return (
     <AppLayout>
-      <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-black px-4">
-        {/* Brand Section */}
-        <div className="text-center mb-8">
-          <h1 
-            className="text-4xl font-medium tracking-tight"
-            style={{
-              backgroundImage: 'linear-gradient(to right, #2563eb, #7e22ce)',
-              WebkitBackgroundClip: 'text',
-              backgroundClip: 'text',
-              color: 'transparent',
-              fontFamily: 'var(--font-inter)'
-            }}
-          >
-            Zenlit
-          </h1>
-          <p className="text-gray-300 text-lg mt-1">Connect with people around you</p>
-        </div>
+      <PageTransition direction="left">
+          <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-black px-4" data-page-transition>
+          {/* Brand Section */}
+          <div className="text-center mb-8">
+            <h1 
+              className="text-4xl font-medium tracking-tight"
+              style={{
+                backgroundImage: 'linear-gradient(to right, #2563eb, #7e22ce)',
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+                fontFamily: 'var(--font-inter)'
+              }}
+            >
+              Zenlit
+            </h1>
+            <p className="text-gray-300 text-lg mt-1">Connect with people around you</p>
+          </div>
 
         {/* 3D Sign-in Box (mirrors Sign Up) */}
         <div className="w-full max-w-sm bg-gradient-to-br from-slate-900/90 to-slate-950/90 border border-slate-700/50 rounded-2xl p-6 shadow-2xl transform-gpu backdrop-blur-sm"
@@ -120,7 +131,7 @@ export default function SignInPage() {
 
           <p className="text-center text-gray-400 text-sm mt-6">
             Don&apos;t have an account?{' '}
-            <button onClick={() => router.push('/auth/signup')} className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+            <button onClick={handleSignUpClick} className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
               Sign Up
             </button>
           </p>
@@ -138,6 +149,7 @@ export default function SignInPage() {
           </a>
         </p>
       </div>
-    </AppLayout>
-  );
+    </PageTransition>
+  </AppLayout>
+);
 }
