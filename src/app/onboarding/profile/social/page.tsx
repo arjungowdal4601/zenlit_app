@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
+import AppHeader from '@/components/AppHeader';
 import { Camera, X, Check, Save, Upload, Edit, Instagram, Trash2, ArrowLeft } from 'lucide-react';
 import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
 import Image from 'next/image';
@@ -25,6 +26,12 @@ export default function CompleteProfileOnboardingPage() {
   });
 
   // Social validation state
+  const [socialValidation, setSocialValidation] = useState({
+    instagram: { isValid: true, message: '' },
+    twitter: { isValid: true, message: '' },
+    linkedin: { isValid: true, message: '' },
+  });
+
   // Modal states for editing social links
   const [modalStates, setModalStates] = useState({
     instagram: false,
@@ -34,6 +41,8 @@ export default function CompleteProfileOnboardingPage() {
 
   // Temporary input state for modal editing
   const [tempSocialInput, setTempSocialInput] = useState('');
+  const [currentEditingPlatform, setCurrentEditingPlatform] = useState<'instagram' | 'x' | 'linkedin' | null>(null);
+
   // State for form errors (bio only here)
   const [errors, setErrors] = useState<{ bio: string }>({ bio: '' });
 
@@ -50,7 +59,50 @@ export default function CompleteProfileOnboardingPage() {
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
   // Regex validation functions for social links (reused)
+  const validateInstagram = (url: string): { isValid: boolean; message: string } => {
+    if (!url.trim()) return { isValid: true, message: '' };
+    const instagramRegex = /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9._]+\/?$/;
+    if (!instagramRegex.test(url)) {
+      return { isValid: false, message: 'Please enter a valid Instagram URL (e.g., instagram.com/username)' };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  const validateTwitter = (url: string): { isValid: boolean; message: string } => {
+    if (!url.trim()) return { isValid: true, message: '' };
+    const twitterRegex = /^(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/?$/;
+    if (!twitterRegex.test(url)) {
+      return { isValid: false, message: 'Please enter a valid Twitter/X URL (e.g., x.com/username or twitter.com/username)' };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  const validateLinkedIn = (url: string): { isValid: boolean; message: string } => {
+    if (!url.trim()) return { isValid: true, message: '' };
+    const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9-]+\/?$/;
+    if (!linkedinRegex.test(url)) {
+      return { isValid: false, message: 'Please enter a valid LinkedIn URL (e.g., linkedin.com/in/username)' };
+    }
+    return { isValid: true, message: '' };
+  };
+
   // Handle social link changes with validation
+  const handleSocialLinkChange = (platform: keyof typeof socialLinks, value: string) => {
+    setSocialLinks(prev => ({ ...prev, [platform]: value }));
+    let validation;
+    switch (platform) {
+      case 'instagram':
+        validation = validateInstagram(value); break;
+      case 'twitter':
+        validation = validateTwitter(value); break;
+      case 'linkedin':
+        validation = validateLinkedIn(value); break;
+      default:
+        validation = { isValid: true, message: '' };
+    }
+    setSocialValidation(prev => ({ ...prev, [platform]: validation }));
+  };
+
   // Ensure only one menu is open at a time
   useEffect(() => { if (showBannerMenu) setShowProfileMenu(false); }, [showBannerMenu]);
   useEffect(() => { if (showProfileMenu) setShowBannerMenu(false); }, [showProfileMenu]);
@@ -339,7 +391,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.instagram); setModalStates(prev => ({ ...prev, instagram: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('instagram'); setTempSocialInput(socialLinks.instagram); setModalStates(prev => ({ ...prev, instagram: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -368,7 +420,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.twitter); setModalStates(prev => ({ ...prev, x: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('x'); setTempSocialInput(socialLinks.twitter); setModalStates(prev => ({ ...prev, x: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -397,7 +449,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.linkedin); setModalStates(prev => ({ ...prev, linkedin: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('linkedin'); setTempSocialInput(socialLinks.linkedin); setModalStates(prev => ({ ...prev, linkedin: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
