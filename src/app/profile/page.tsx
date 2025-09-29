@@ -6,6 +6,7 @@ import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import LogoutConfirmation from '@/components/LogoutConfirmation';
 import SocialLinkButton from '@/components/SocialLinkButton';
+import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
 import { MoreHorizontal, Edit, MessageSquare, LogOut, FileText } from 'lucide-react';
 import { 
@@ -154,6 +155,9 @@ const ProfileScreen = () => {
 
   // Get social media links with proper structure
   const socialLinks = getSocialMediaLinks(userProfile.socialLinks);
+  const instagramUrl = ensureSocialUrl('instagram', socialLinks.instagram);
+  const linkedinUrl = ensureSocialUrl('linkedin', socialLinks.linkedin);
+  const twitterUrl = ensureSocialUrl('twitter', socialLinks.twitter);
 
   return (
     <AppLayout>
@@ -277,8 +281,8 @@ const ProfileScreen = () => {
                 <div className="flex items-center space-x-1.5 pt-2">
                   <SocialLinkButton
                     platform="instagram"
-                    href={socialLinks.instagram ? `https://instagram.com/${socialLinks.instagram}` : undefined}
-                    buttonClassName={socialLinks.instagram ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    href={instagramUrl ?? undefined}
+                    buttonClassName={instagramUrl ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
                     containerClassName="w-8 h-8"
                     iconClassName="w-5 h-5"
                     ariaLabel="Instagram"
@@ -286,8 +290,8 @@ const ProfileScreen = () => {
 
                   <SocialLinkButton
                     platform="linkedin"
-                    href={socialLinks.linkedin ? `https://linkedin.com/in/${socialLinks.linkedin}` : undefined}
-                    buttonClassName={socialLinks.linkedin ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    href={linkedinUrl ?? undefined}
+                    buttonClassName={linkedinUrl ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
                     containerClassName="w-8 h-8"
                     iconClassName="w-5 h-5"
                     ariaLabel="LinkedIn"
@@ -295,8 +299,8 @@ const ProfileScreen = () => {
 
                   <SocialLinkButton
                     platform="twitter"
-                    href={socialLinks.x_twitter ? `https://twitter.com/${socialLinks.x_twitter}` : undefined}
-                    buttonClassName={socialLinks.x_twitter ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    href={twitterUrl ?? undefined}
+                    buttonClassName={twitterUrl ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
                     containerClassName="w-8 h-8"
                     iconClassName="w-5 h-5"
                     containerStyle={{ border: '1px solid #333' }}

@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import AppHeader from '@/components/AppHeader';
 import { Camera, X, Check, Save, Upload, Edit, Instagram, Trash2, ArrowLeft } from 'lucide-react';
 import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
 import Image from 'next/image';
@@ -58,7 +57,6 @@ export default function CompleteProfileOnboardingPage() {
 
   // Temporary input state for modal editing
   const [tempSocialInput, setTempSocialInput] = useState('');
-  const [currentEditingPlatform, setCurrentEditingPlatform] = useState<'instagram' | 'x' | 'linkedin' | null>(null);
 
   // State for form errors (bio only here)
   const [errors, setErrors] = useState<{ bio: string }>({ bio: '' });
@@ -115,20 +113,22 @@ export default function CompleteProfileOnboardingPage() {
     return { isValid: true, message: '' };
   };
 
-  // Handle social link changes with validation
   const handleSocialLinkChange = (platform: keyof typeof socialLinks, value: string) => {
     setSocialLinks(prev => ({ ...prev, [platform]: value }));
-    let validation;
-    switch (platform) {
-      case 'instagram':
-        validation = validateInstagram(value); break;
-      case 'twitter':
-        validation = validateTwitter(value); break;
-      case 'linkedin':
-        validation = validateLinkedIn(value); break;
-      default:
-        validation = { isValid: true, message: '' };
-    }
+
+    const validation = (() => {
+      switch (platform) {
+        case 'instagram':
+          return validateInstagram(value);
+        case 'twitter':
+          return validateTwitter(value);
+        case 'linkedin':
+          return validateLinkedIn(value);
+        default:
+          return { isValid: true, message: '' };
+      }
+    })();
+
     setSocialValidation(prev => ({ ...prev, [platform]: validation }));
   };
 
@@ -490,7 +490,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('instagram'); setTempSocialInput(socialLinks.instagram); setModalStates(prev => ({ ...prev, instagram: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.instagram); setModalStates(prev => ({ ...prev, instagram: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -519,7 +519,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('x'); setTempSocialInput(socialLinks.twitter); setModalStates(prev => ({ ...prev, x: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.twitter); setModalStates(prev => ({ ...prev, x: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -548,7 +548,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('linkedin'); setTempSocialInput(socialLinks.linkedin); setModalStates(prev => ({ ...prev, linkedin: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.linkedin); setModalStates(prev => ({ ...prev, linkedin: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -681,7 +681,7 @@ export default function CompleteProfileOnboardingPage() {
                     <button
                       type="button"
                       aria-label="Remove Instagram"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, instagram: '' })); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('instagram', ''); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -702,7 +702,7 @@ export default function CompleteProfileOnboardingPage() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, instagram: tempSocialInput })); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('instagram', tempSocialInput); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
                       className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -745,7 +745,7 @@ export default function CompleteProfileOnboardingPage() {
                     <button
                       type="button"
                       aria-label="Remove X"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, twitter: '' })); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('twitter', ''); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -766,7 +766,7 @@ export default function CompleteProfileOnboardingPage() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, twitter: tempSocialInput })); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('twitter', tempSocialInput); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
                       className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -809,7 +809,7 @@ export default function CompleteProfileOnboardingPage() {
                     <button
                       type="button"
                       aria-label="Remove LinkedIn"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, linkedin: '' })); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('linkedin', ''); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -830,7 +830,7 @@ export default function CompleteProfileOnboardingPage() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, linkedin: tempSocialInput })); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('linkedin', tempSocialInput); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
                       className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >

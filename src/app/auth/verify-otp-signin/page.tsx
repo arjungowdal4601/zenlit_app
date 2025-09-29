@@ -116,7 +116,7 @@ function VerifyOtpSigninContent() {
       setError(null);
       setStatus(null);
 
-      const { data: { session }, error } = await supabase.auth.verifyOtp({
+      const { error } = await supabase.auth.verifyOtp({
         email,
         token: code,
         type: 'email',

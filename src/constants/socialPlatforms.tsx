@@ -7,7 +7,13 @@ export type SocialPlatformId = 'instagram' | 'linkedin' | 'twitter';
 export type SocialLinks = {
   instagram?: string | null;
   linkedin?: string | null;
+  twitter?: string | null;
   x_twitter?: string | null;
+};
+
+export const getTwitterHandle = (links?: SocialLinks | null) => {
+  if (!links) return null;
+  return links.twitter ?? links.x_twitter ?? null;
 };
 
 type IconRenderer = (className?: string) => ReactElement;
@@ -58,7 +64,7 @@ export const SOCIAL_PLATFORMS: Record<SocialPlatformId, SocialPlatformMeta> = {
     id: 'twitter',
     label: 'X (Twitter)',
     style: {
-      background: '#6b7280',
+      background: '#000000',
     },
     wrapperClassName: 'flex items-center justify-center rounded-sm',
     iconClassName: 'text-white',

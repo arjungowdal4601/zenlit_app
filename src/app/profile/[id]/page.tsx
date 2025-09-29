@@ -2,10 +2,11 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import SocialLinkButton from '@/components/SocialLinkButton';
+import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { 
@@ -14,8 +15,7 @@ import {
   UserPost, 
   getProfilePictureUrl, 
   getBannerUrl, 
-  getSocialMediaLinks,
-  formatTimeAgo 
+  getSocialMediaLinks
 } from '@/utils/profileData';
 
 const OtherUserProfilePage = () => {
@@ -30,8 +30,8 @@ const OtherUserProfilePage = () => {
   const [socialLinks, setSocialLinks] = useState<{
     instagram: string | null;
     linkedin: string | null;
-    x_twitter: string | null;
-  }>({ instagram: null, linkedin: null, x_twitter: null });
+    twitter: string | null;
+  }>({ instagram: null, linkedin: null, twitter: null });
 
   // Fetch user data on mount
   useEffect(() => {
@@ -130,6 +130,10 @@ const OtherUserProfilePage = () => {
     );
   }
 
+  const instagramUrl = ensureSocialUrl('instagram', socialLinks.instagram);
+  const linkedinUrl = ensureSocialUrl('linkedin', socialLinks.linkedin);
+  const twitterUrl = ensureSocialUrl('twitter', socialLinks.twitter);
+
   return (
     <AppLayout>
       <div className="bg-black">
@@ -195,8 +199,8 @@ const OtherUserProfilePage = () => {
                 <div className="flex items-center space-x-1.5 pt-2">
                   <SocialLinkButton
                     platform="instagram"
-                    href={socialLinks.instagram ? `https://instagram.com/${socialLinks.instagram}` : undefined}
-                    buttonClassName={socialLinks.instagram ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    href={instagramUrl ?? undefined}
+                    buttonClassName={instagramUrl ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
                     containerClassName="w-8 h-8"
                     iconClassName="w-5 h-5"
                     ariaLabel="Instagram"
@@ -204,8 +208,8 @@ const OtherUserProfilePage = () => {
 
                   <SocialLinkButton
                     platform="linkedin"
-                    href={socialLinks.linkedin ? `https://linkedin.com/in/${socialLinks.linkedin}` : undefined}
-                    buttonClassName={socialLinks.linkedin ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    href={linkedinUrl ?? undefined}
+                    buttonClassName={linkedinUrl ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
                     containerClassName="w-8 h-8"
                     iconClassName="w-5 h-5"
                     ariaLabel="LinkedIn"
@@ -213,8 +217,8 @@ const OtherUserProfilePage = () => {
 
                   <SocialLinkButton
                     platform="twitter"
-                    href={socialLinks.x_twitter ? `https://twitter.com/${socialLinks.x_twitter}` : undefined}
-                    buttonClassName={socialLinks.x_twitter ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
+                    href={twitterUrl ?? undefined}
+                    buttonClassName={twitterUrl ? 'hover:scale-110' : 'pointer-events-none opacity-50 filter grayscale'}
                     containerClassName="w-8 h-8"
                     iconClassName="w-5 h-5"
                     containerStyle={{ border: '1px solid #333' }}

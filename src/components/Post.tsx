@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import SocialLinkButton from '@/components/SocialLinkButton';
-import { DEFAULT_VISIBLE_PLATFORMS, ensureSocialUrl, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
+import { DEFAULT_VISIBLE_PLATFORMS, ensureSocialUrl, getTwitterHandle, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
 
 interface PostProps {
   id: string;
@@ -21,7 +21,8 @@ interface PostProps {
 const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VISIBLE_PLATFORMS }: PostProps) => {
   const instagramUrl = ensureSocialUrl('instagram', author.socialLinks?.instagram);
   const linkedinUrl = ensureSocialUrl('linkedin', author.socialLinks?.linkedin);
-  const twitterUrl = ensureSocialUrl('twitter', author.socialLinks?.x_twitter);
+  const twitterHandle = getTwitterHandle(author.socialLinks);
+  const twitterUrl = ensureSocialUrl('twitter', twitterHandle);
 
   return (
     <div className="mb-3 relative">
@@ -83,7 +84,7 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VI
           {/* Author Info */}
           <div className="mb-2">
             <h3 className="text-white font-semibold text-base">{author.name}</h3>
-            <span className="text-gray-400 text-sm">@{author.username} · {timestamp}</span>
+            <span className="text-gray-400 text-sm">@{author.username} &bull; {timestamp}</span>
           </div>
 
           {/* Post Text */}

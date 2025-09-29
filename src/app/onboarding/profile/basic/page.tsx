@@ -16,6 +16,13 @@ const genderOptions = [
 
 type GenderValue = (typeof genderOptions)[number]['value'];
 
+interface SaveProfileResponse {
+  error?: string;
+  success?: boolean;
+  profile?: unknown;
+  message?: string;
+}
+
 export default function BasicProfileSetup() {
   const router = useRouter();
   const [displayName, setDisplayName] = useState('');
@@ -71,7 +78,7 @@ export default function BasicProfileSetup() {
       });
 
       // Attempt to parse JSON response safely
-      let result: any = null;
+      let result: SaveProfileResponse | null = null;
       try {
         result = await response.json();
       } catch (parseErr) {
@@ -79,7 +86,7 @@ export default function BasicProfileSetup() {
       }
 
       if (!response.ok) {
-        const msg = (result && result.error) ? result.error : 'Failed to save profile';
+        const msg = result?.error ?? 'Failed to save profile';
         throw new Error(msg);
       }
 

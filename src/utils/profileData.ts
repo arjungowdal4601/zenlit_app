@@ -19,6 +19,7 @@ export interface SocialLinks {
   bio?: string;
   instagram?: string;
   linkedin?: string;
+  twitter?: string;
   x_twitter?: string;
 }
 
@@ -130,10 +131,11 @@ export function getBannerUrl(socialLinks: SocialLinks | null): string | null {
  * Get display-ready social media links with proper formatting
  */
 export function getSocialMediaLinks(socialLinks: SocialLinks | null) {
+  const twitterHandle = socialLinks?.twitter ?? socialLinks?.x_twitter ?? null;
   return {
     instagram: socialLinks?.instagram || null,
     linkedin: socialLinks?.linkedin || null,
-    x_twitter: socialLinks?.x_twitter || null,
+    twitter: twitterHandle,
   };
 }
 

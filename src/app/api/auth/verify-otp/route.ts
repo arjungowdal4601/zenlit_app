@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
-    const { data, error } = await supabase.auth.verifyOtp({
+    const { error } = await supabase.auth.verifyOtp({
       email,
       token: code,
       type: 'email',
@@ -18,9 +18,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    // data.session contains the authenticated session; return minimal confirmation
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch (error) {
+    console.error('OTP verification error:', error);
     return NextResponse.json({ error: 'Bad Request' }, { status: 400 });
   }
 }

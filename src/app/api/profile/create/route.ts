@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization') ?? '';
     const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-    let supabase: any;
+    let supabase: SupabaseClient;
     if (bearerToken) {
       // Use the provided bearer token for RLS and auth
       supabase = createClient(url, anon, {
@@ -36,7 +36,8 @@ export async function POST(request: NextRequest) {
           set(name: string, value: string, options: CookieOptions) {
             internalRes.cookies.set(name, value, options);
           },
-          remove(name: string, _options: CookieOptions) {
+          remove(name: string, options: CookieOptions) {
+            void options;
             internalRes.cookies.delete(name);
           },
         },

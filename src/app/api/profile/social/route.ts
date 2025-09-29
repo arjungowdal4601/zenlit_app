@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 // Validation functions
@@ -46,6 +46,15 @@ const validateImageFile = (file: File): { valid: boolean; error?: string } => {
   return { valid: true };
 };
 
+interface SocialLinksUpdatePayload {
+  bio: string | null;
+  instagram: string | null;
+  x_twitter: string | null;
+  linkedin: string | null;
+  profile_pic_url?: string | null;
+  banner_url?: string | null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Create a response to allow Supabase to set/refresh auth cookies
@@ -58,7 +67,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('authorization') ?? '';
     const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-    let supabase: any;
+    let supabase: SupabaseClient;
     if (bearerToken) {
       // Use the provided bearer token for RLS and auth
       supabase = createClient(url, anon, {
@@ -79,7 +88,8 @@ export async function POST(request: NextRequest) {
           set(name: string, value: string, options: CookieOptions) {
             internalRes.cookies.set(name, value, options);
           },
-          remove(name: string, _options: CookieOptions) {
+          remove(name: string, options: CookieOptions) {
+            void options;
             internalRes.cookies.delete(name);
           },
         },
@@ -258,7 +268,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: SocialLinksUpdatePayload = {
       bio: bio || null,
       instagram: instagramUrl || null,
       x_twitter: twitterUrl || null,

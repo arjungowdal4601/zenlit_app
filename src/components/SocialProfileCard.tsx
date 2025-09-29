@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { MessageSquare, User } from 'lucide-react';
 import SocialLinkButton from '@/components/SocialLinkButton';
-import { DEFAULT_VISIBLE_PLATFORMS, ensureSocialUrl, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
+import { DEFAULT_VISIBLE_PLATFORMS, ensureSocialUrl, getTwitterHandle, type SocialLinks, type SocialPlatformId } from '@/constants/socialPlatforms';
 import { useRouter } from 'next/navigation';
 
 interface SocialProfileCardProps {
@@ -31,7 +31,8 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
 
   const instagramUrl = ensureSocialUrl('instagram', user.socialLinks?.instagram);
   const linkedinUrl = ensureSocialUrl('linkedin', user.socialLinks?.linkedin);
-  const twitterUrl = ensureSocialUrl('twitter', user.socialLinks?.x_twitter);
+  const twitterHandle = getTwitterHandle(user.socialLinks);
+  const twitterUrl = ensureSocialUrl('twitter', twitterHandle);
 
   const goToProfile = () => {
     // Navigate to other user's profile page
