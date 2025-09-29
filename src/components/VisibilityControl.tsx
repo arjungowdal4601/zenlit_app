@@ -38,14 +38,16 @@ const VisibilityControl: React.FC = () => {
           <button
             onClick={handleVisibilityToggle}
             className={mergeClassNames(
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none',
-              isVisible ? 'bg-blue-600' : 'bg-gray-600',
+              'relative inline-flex h-7 w-14 items-center justify-start rounded-full px-1 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black',
+              isVisible
+                ? 'bg-blue-500 border border-blue-400 shadow-[0_6px_14px_rgba(59,130,246,0.35)]'
+                : 'bg-gray-700 border border-gray-600 shadow-[inset_0_1px_2px_rgba(15,23,42,0.45)]',
             )}
           >
             <span
               className={mergeClassNames(
-                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200',
-                isVisible ? 'translate-x-6' : 'translate-x-1',
+                'inline-block h-5 w-5 transform rounded-full bg-white shadow-[0_2px_4px_rgba(15,23,42,0.35)] transition-transform duration-200 ease-in-out',
+                isVisible ? 'translate-x-7' : 'translate-x-0',
               )}
             />
           </button>
