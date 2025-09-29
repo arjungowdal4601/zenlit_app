@@ -6,11 +6,12 @@ import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { ChangeEvent } from 'react';
 import { useMemo, useState } from 'react';
+import { supabase } from '@/utils/supabaseClient';
 
 const genderOptions = [
   { value: 'male', label: 'Male' },
   { value: 'female', label: 'Female' },
-  { value: 'others', label: 'Others' },
+  { value: 'other', label: 'Others' },
 ] as const;
 
 type GenderValue = (typeof genderOptions)[number]['value'];
@@ -21,6 +22,7 @@ export default function BasicProfileSetup() {
   const [username, setUsername] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState<GenderValue | ''>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   const canContinue = Boolean(displayName.trim() && username.trim() && dob && gender);
@@ -30,9 +32,64 @@ export default function BasicProfileSetup() {
     setUsername(nextValue);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!canContinue) return;
-    router.push('/onboarding/profile/social');
+    setIsSubmitting(true);
+
+    try {
+      // Ensure user is signed in
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('Error getting user:', userError);
+        alert('Authentication error. Please sign in again.');
+        router.push('/auth/signin');
+        return;
+      }
+
+      // Get access token to send Authorization header for server authentication
+      const sessionRes = await supabase.auth.getSession();
+      const accessToken = sessionRes.data.session?.access_token;
+      if (!accessToken) {
+        alert('Session expired. Please sign in again.');
+        router.push('/auth/signin');
+        return;
+      }
+
+      const response = await fetch('/api/profile/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          displayName: displayName.trim(),
+          username: username.trim(),
+          dateOfBirth: dob,
+          gender: gender,
+          email: user.email,
+        }),
+      });
+
+      // Attempt to parse JSON response safely
+      let result: any = null;
+      try {
+        result = await response.json();
+      } catch (parseErr) {
+        console.error('Failed to parse response JSON:', parseErr);
+      }
+
+      if (!response.ok) {
+        const msg = (result && result.error) ? result.error : 'Failed to save profile';
+        throw new Error(msg);
+      }
+
+      router.push('/onboarding/profile/social');
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert(error instanceof Error ? error.message : 'Failed to save profile. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,7 +100,7 @@ export default function BasicProfileSetup() {
           <div className="mb-4 w-full">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => router.push('/auth/signup')}
               aria-label="Go back"
               className="p-2 hover:bg-gray-800 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
@@ -84,7 +141,7 @@ export default function BasicProfileSetup() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-200">Username</label>
+                <label className="mb-2 block text sm font-medium text-slate-200">Username</label>
                 <input
                   value={username}
                   onChange={handleUsernameChange}
@@ -133,15 +190,15 @@ export default function BasicProfileSetup() {
             <button
               type="button"
               onClick={handleContinue}
-              disabled={!canContinue}
+              disabled={!canContinue || isSubmitting}
               className={mergeClassNames(
                 'mt-8 inline-flex w-full items-center justify-center rounded-xl px-4 py-3 text-base font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 disabled:cursor-not-allowed disabled:opacity-60 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] text-white',
-                canContinue
+                canContinue && !isSubmitting
                   ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800'
                   : 'bg-slate-700/60 text-slate-300'
               )}
             >
-              Continue to next step
+              {isSubmitting ? 'Saving...' : 'Continue to next step'}
             </button>
           </div>
         </div>

@@ -7,9 +7,22 @@ import AppHeader from '@/components/AppHeader';
 import { Camera, X, Check, Save, Upload, Edit, Instagram, Trash2, ArrowLeft } from 'lucide-react';
 import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
 import Image from 'next/image';
+import { supabase } from '@/utils/supabaseClient';
 
 export default function CompleteProfileOnboardingPage() {
   const router = useRouter();
+
+  // Initial state for comparison
+  const initialState = {
+    bio: '',
+    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4',
+    bannerImage: null as string | null,
+    socialLinks: {
+      instagram: '',
+      twitter: '',
+      linkedin: '',
+    }
+  };
 
   // State for profile data (no display name here)
   const [profileData, setProfileData] = useState({
@@ -24,6 +37,10 @@ export default function CompleteProfileOnboardingPage() {
     twitter: '',
     linkedin: '',
   });
+
+  // File states for tracking actual file uploads
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
 
   // Social validation state
   const [socialValidation, setSocialValidation] = useState({
@@ -57,6 +74,18 @@ export default function CompleteProfileOnboardingPage() {
   // File input refs
   const profileFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if form has changes
+  const hasChanges = () => {
+    return (
+      profileData.bio !== initialState.bio ||
+      profileImageFile !== null ||
+      bannerImageFile !== null ||
+      socialLinks.instagram !== initialState.socialLinks.instagram ||
+      socialLinks.twitter !== initialState.socialLinks.twitter ||
+      socialLinks.linkedin !== initialState.socialLinks.linkedin
+    );
+  };
 
   // Regex validation functions for social links (reused)
   const validateInstagram = (url: string): { isValid: boolean; message: string } => {
@@ -122,11 +151,19 @@ export default function CompleteProfileOnboardingPage() {
 
   // Banner image handlers
   const handleBannerImageSelect = () => { bannerFileInputRef.current?.click(); setShowBannerMenu(false); };
-  const handleRemoveBannerImage = () => { setProfileData(prev => ({ ...prev, bannerImage: null })); setShowBannerMenu(false); };
+  const handleRemoveBannerImage = () => { 
+    setProfileData(prev => ({ ...prev, bannerImage: null })); 
+    setBannerImageFile(null);
+    setShowBannerMenu(false); 
+  };
 
   // Profile image handlers
   const handleProfileImageSelect = () => { profileFileInputRef.current?.click(); setShowProfileMenu(false); };
-  const handleRemoveProfileImage = () => { setProfileData(prev => ({ ...prev, profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4' })); setShowProfileMenu(false); };
+  const handleRemoveProfileImage = () => { 
+    setProfileData(prev => ({ ...prev, profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4' })); 
+    setProfileImageFile(null);
+    setShowProfileMenu(false); 
+  };
 
   // Generic input change
   const handleInputChange = (field: keyof typeof profileData, value: string) => {
@@ -136,25 +173,87 @@ export default function CompleteProfileOnboardingPage() {
 
   const validateForm = () => {
     const newErrors = { bio: '' } as { bio: string };
-    if (profileData.bio.length > 500) newErrors.bio = 'Bio must be less than 500 characters';
+    let isValid = true;
+    
+    // Validate bio length
+    if (profileData.bio.length > 500) {
+      newErrors.bio = 'Bio must be 500 characters or less';
+      isValid = false;
+    }
+    
+    // Check social link validations
+    const socialValidationErrors = Object.values(socialValidation).some(validation => !validation.isValid);
+    if (socialValidationErrors) {
+      isValid = false;
+    }
+    
     setErrors(newErrors);
-    return Object.values(newErrors).every(e => e === '');
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+
+    // Ensure user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      alert('Please sign in to update your profile.');
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (!validateForm()) {
+      alert('Please fix the validation errors before saving.');
+      return;
+    }
+
     setIsSubmitting(true);
+
     try {
-      // Simulate API call (reuse same behavior as Edit Profile)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const formData = new FormData();
+
+      // Add text data
+      formData.append('bio', profileData.bio);
+      formData.append('instagram', socialLinks.instagram);
+      formData.append('twitter', socialLinks.twitter);
+      formData.append('linkedin', socialLinks.linkedin);
+
+      // Add image files if they exist
+      if (profileImageFile) {
+        formData.append('profileImage', profileImageFile);
+      }
+      if (bannerImageFile) {
+        formData.append('bannerImage', bannerImageFile);
+      }
+
+      const response = await fetch('/api/profile/social', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert('Please sign in to continue.');
+          router.push('/auth/signin');
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      // Show success message
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        // Remain on page after saving, as in Edit Profile
+        router.push('/radar');
       }, 2000);
+
     } catch (error) {
       console.error('Error updating profile:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -473,8 +572,12 @@ export default function CompleteProfileOnboardingPage() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:transform-none disabled:shadow-none font-medium flex items-center justify-center gap-2"
+                disabled={!hasChanges() || isSubmitting}
+                className={`flex-1 px-6 py-3 rounded-lg transition-all duration-300 font-medium flex items-center justify-center gap-2 ${
+                  hasChanges() && !isSubmitting
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
+                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }`}
                 style={{ fontFamily: 'var(--font-inter)' }}
               >
                 {isSubmitting ? (
@@ -496,10 +599,24 @@ export default function CompleteProfileOnboardingPage() {
           <input
             ref={profileFileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
+                // Validate file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                  alert('Image size must be less than 10MB');
+                  return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                  alert('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+                  return;
+                }
+                
+                setProfileImageFile(file);
                 const reader = new FileReader();
                 reader.onload = (event) => {
                   setProfileData(prev => ({ ...prev, profileImage: event.target?.result as string }));
@@ -512,10 +629,24 @@ export default function CompleteProfileOnboardingPage() {
           <input
             ref={bannerFileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
+                // Validate file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                  alert('Image size must be less than 10MB');
+                  return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                  alert('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+                  return;
+                }
+                
+                setBannerImageFile(file);
                 const reader = new FileReader();
                 reader.onload = (event) => {
                   setProfileData(prev => ({ ...prev, bannerImage: event.target?.result as string }));

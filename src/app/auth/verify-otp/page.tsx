@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import AppLayout from '@/components/AppLayout';
 import { mergeClassNames } from '@/utils/classNames';
@@ -6,6 +6,7 @@ import { ArrowLeft, MailCheck } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { ChangeEvent, FormEvent } from 'react';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { supabase } from '@/utils/supabaseClient';
 
 const CODE_LENGTH = 6;
 const COOLDOWN_SECONDS = 60;
@@ -102,15 +103,14 @@ function VerifyOtpContent() {
       setError(null);
       setStatus(null);
 
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
+      const { data: { session }, error } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: 'email',
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data?.error || 'Invalid or expired code.');
+      if (error) {
+        throw new Error(error.message);
       }
 
       setStatus('Email verified! Taking you to your profile setup...');
@@ -138,7 +138,7 @@ function VerifyOtpContent() {
       const res = await fetch('/api/auth/request-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, shouldCreateUser: true }),
       });
 
       const data = await res.json();
@@ -211,20 +211,23 @@ function VerifyOtpContent() {
                   <label className="mb-2 block text-sm font-medium text-slate-200">
                     Enter the 6-digit code
                   </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    placeholder="000000"
-                    autoComplete="one-time-code"
-                    value={code}
-                    onChange={handleCodeChange}
-                    className="h-14 w-full rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 text-center text-xl font-semibold tracking-[0.6em] text-white transition-colors focus:border-blue-500/70 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                  />
-                  <p className="mt-2 text-xs text-slate-400">
-                    Tip: while we&apos;re in preview, use the demo code{' '}
-                    <span className="font-semibold text-slate-200">000000</span>.
-                  </p>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      autoComplete="one-time-code"
+                      value={code}
+                      onChange={handleCodeChange}
+                      className="h-14 w-full rounded-xl border border-slate-700/80 bg-slate-900/60 px-4 text-center text-xl font-semibold tracking-[0.6em] text-white transition-colors focus:border-blue-500/70 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                    />
+                    {code.length === 0 && (
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-xl font-semibold tracking-[0.6em] text-slate-300/25 select-none">
+                        000000
+                      </span>
+                    )}
+                  </div>
+                  {/* Removed preview demo tip now that real OTP is live */}
                 </div>
 
                 <button

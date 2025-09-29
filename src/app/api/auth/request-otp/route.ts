@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/utils/supabaseClient';
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = await req.json();
+    const { email, shouldCreateUser } = await req.json();
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
     }
 
-    // In a real app, you would generate and email an OTP here.
-    // For this prototype, we always "send" the fixed 6-digit code 000000
-    const devCode = '000000';
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        // Default to auto-creating users unless explicitly disabled by caller (signin flow)
+        shouldCreateUser: shouldCreateUser === false ? false : true,
+      },
+    });
 
-    return NextResponse.json({ ok: true, devCode });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'Bad Request' }, { status: 400 });
   }

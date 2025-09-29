@@ -6,17 +6,42 @@ import PageTransition, { useAnimatedRouter } from '@/components/PageTransition';
 import { FcGoogle } from 'react-icons/fc';
 import { useState } from 'react';
 import { mergeClassNames } from '@/utils/classNames';
+import { supabase } from '@/utils/supabaseClient';
 
 export default function SignUpPage() {
   const router = useRouter();
   const { animatedPush } = useAnimatedRouter();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
-  const continueWithGoogle = () => {
-    router.push('/onboarding/profile/basic');
+  const continueWithGoogle = async () => {
+    try {
+      setGoogleLoading(true);
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Google OAuth error:', error);
+        alert('Failed to sign in with Google. Please try again.');
+      }
+      // Note: The redirect will happen automatically, so we don't need to handle success here
+    } catch (error) {
+      console.error('Unexpected Google OAuth error:', error);
+      alert('An unexpected error occurred. Please try again.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const continueWithEmail = async () => {
@@ -25,7 +50,7 @@ export default function SignUpPage() {
       const res = await fetch('/api/auth/request-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, shouldCreateUser: true }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Failed to send code');
@@ -76,10 +101,13 @@ export default function SignUpPage() {
 
           <button
             onClick={continueWithGoogle}
-            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-800 font-medium border border-gray-200 rounded-xl px-4 py-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-800 font-medium border border-gray-200 rounded-xl px-4 py-3 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <FcGoogle className="text-2xl" />
-            <span className="text-gray-900 font-medium">Continue with Google</span>
+            <span className="text-gray-900 font-medium">
+              {googleLoading ? 'Connecting...' : 'Continue with Google'}
+            </span>
           </button>
 
           <div className="flex items-center gap-3 my-6">
