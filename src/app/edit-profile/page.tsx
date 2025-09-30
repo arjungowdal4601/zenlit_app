@@ -14,11 +14,10 @@ import {
   getSocialMediaLinks,
   updateUserProfile,
   updateSocialLinks,
-  type CompleteUserProfile,
 } from '@/utils/profileData';
-  import { uploadProfileImage, replaceProfileImage } from '@/utils/supabaseStorage';
-  import { supabase } from '@/utils/supabaseClient';
-  import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageCompression';
+import { uploadProfileImage, replaceProfileImage } from '@/utils/supabaseStorage';
+import { supabase } from '@/utils/supabaseClient';
+import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageCompression';
 
   const EditProfilePage = () => {
     // Helper: extract username/handle from a social link or handle

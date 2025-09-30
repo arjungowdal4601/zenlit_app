@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
@@ -8,7 +8,7 @@ import AppHeader from '@/components/AppHeader';
 import SocialLinkButton from '@/components/SocialLinkButton';
 import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { 
   fetchUserProfile, 
   CompleteUserProfile, 
@@ -20,6 +20,7 @@ import {
 
 const OtherUserProfilePage = () => {
   const params = useParams();
+  const router = useRouter();
   const idParam = (params?.id ?? '') as string;
 
   // State for user profile data
@@ -27,27 +28,30 @@ const OtherUserProfilePage = () => {
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [socialLinks, setSocialLinks] = useState<{
-    instagram: string | null;
-    linkedin: string | null;
-    twitter: string | null;
-  }>({ instagram: null, linkedin: null, twitter: null });
 
   // Fetch user data on mount
   useEffect(() => {
+    let isMounted = true;
+
     const loadUserData = async () => {
       if (!idParam) {
-        setError('Invalid user ID');
-        setLoading(false);
+        if (isMounted) {
+          setError('Invalid user ID');
+          setLoading(false);
+        }
         return;
       }
 
       try {
+        if (!isMounted) return;
+
         setLoading(true);
         setError(null);
-        
+
         const data = await fetchUserProfile(idParam);
-        
+
+        if (!isMounted) return;
+
         if (!data) {
           setError('User not found');
           setLoading(false);
@@ -56,17 +60,29 @@ const OtherUserProfilePage = () => {
 
         setUserProfile(data);
         setPosts(data.posts);
-        setSocialLinks(getSocialMediaLinks(data.socialLinks));
       } catch (err) {
-        console.error('Error loading user data:', err);
-        setError('Failed to load user profile');
+        if (isMounted) {
+          console.error('Error loading user data:', err);
+          setError('Failed to load user profile');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUserData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [idParam]);
+
+  const normalizedSocialLinks = useMemo(
+    () => getSocialMediaLinks(userProfile?.socialLinks ?? null),
+    [userProfile?.socialLinks]
+  );
 
   // Loading state
   if (loading) {
@@ -118,7 +134,7 @@ const OtherUserProfilePage = () => {
             <p className="text-gray-300">{error || 'User not found.'}</p>
             {error && (
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => router.refresh()}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Try Again
@@ -130,9 +146,9 @@ const OtherUserProfilePage = () => {
     );
   }
 
-  const instagramUrl = ensureSocialUrl('instagram', socialLinks.instagram);
-  const linkedinUrl = ensureSocialUrl('linkedin', socialLinks.linkedin);
-  const twitterUrl = ensureSocialUrl('twitter', socialLinks.twitter);
+  const instagramUrl = ensureSocialUrl('instagram', normalizedSocialLinks.instagram);
+  const linkedinUrl = ensureSocialUrl('linkedin', normalizedSocialLinks.linkedin);
+  const twitterUrl = ensureSocialUrl('twitter', normalizedSocialLinks.twitter);
 
   return (
     <AppLayout>

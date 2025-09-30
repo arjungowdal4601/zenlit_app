@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
@@ -40,24 +40,42 @@ const ProfileScreen = () => {
 
   // Fetch user data on component mount
   useEffect(() => {
+    let isMounted = true;
+
     const loadUserData = async () => {
       try {
+        if (!isMounted) return;
+
         setLoading(true);
         setError(null);
+
         const data = await fetchCurrentUserProfile();
+
+        if (!isMounted) return;
+
         if (data) {
           setUserProfile(data);
           setPosts(data.posts);
+        } else {
+          setError('Profile not found.');
         }
       } catch (err) {
-        console.error('Error loading user data:', err);
-        setError('Failed to load profile data. Please try again.');
+        if (isMounted) {
+          console.error('Error loading user data:', err);
+          setError('Failed to load profile data. Please try again.');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUserData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Detect if bio is visually truncated when clamped
@@ -97,6 +115,11 @@ const ProfileScreen = () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [dropdownOpen]);
+
+  const socialLinks = useMemo(
+    () => getSocialMediaLinks(userProfile?.socialLinks ?? null),
+    [userProfile?.socialLinks]
+  );
 
   const handleDeletePost = (postId: string) => {
     setPostToDelete(postId);
@@ -153,7 +176,7 @@ const ProfileScreen = () => {
           <div className="text-center">
             <div className="text-red-400 text-lg mb-4">{error || 'Profile not found'}</div>
             <button 
-              onClick={() => window.location.reload()} 
+              onClick={() => router.refresh()} 
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
               Try Again
@@ -165,7 +188,6 @@ const ProfileScreen = () => {
   }
 
   // Get social media links with proper structure
-  const socialLinks = getSocialMediaLinks(userProfile.socialLinks);
   const instagramUrl = ensureSocialUrl('instagram', socialLinks.instagram);
   const linkedinUrl = ensureSocialUrl('linkedin', socialLinks.linkedin);
   const twitterUrl = ensureSocialUrl('twitter', socialLinks.twitter);

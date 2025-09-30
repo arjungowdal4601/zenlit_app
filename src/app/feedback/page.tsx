@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import Image from 'next/image';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Paperclip, X, Check } from 'lucide-react';
+import Image from 'next/image';
+import { supabase } from '@/utils/supabaseClient';
+import { uploadFeedbackImage } from '@/utils/supabaseStorage';
+import { compressImage, validateImageFile } from '@/utils/imageCompression';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
-import { ArrowLeft, X, Check, Paperclip } from 'lucide-react';
-import { supabase } from '@/utils/supabaseClient';
 
 const FeedbackPage = () => {
   const router = useRouter();
@@ -18,27 +20,34 @@ const FeedbackPage = () => {
   const [errors, setErrors] = useState<{ feedbackText?: string }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
-        return;
-      }
-      
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+    if (!file) return;
+
+    // Validate the image file
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+
+    try {
+      // Compress the image to meet the 550KB target used by our utility
+      const result = await compressImage(file);
+      if (!result.success || !result.file) {
+        alert(result.error || 'Failed to compress image below target size.');
         return;
       }
 
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      const compressedFile = result.file;
+      setSelectedImage(compressedFile);
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setImagePreview(previewUrl);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Failed to process image. Please try again.');
     }
   };
 
@@ -79,26 +88,20 @@ const FeedbackPage = () => {
         return;
       }
 
-      // Upload attachment to existing public bucket (profile-images) if provided
-      let uploadedImageUrl: string | null = null;
+      // Upload image if selected
+      let uploadedImageUrl = null;
       if (selectedImage) {
         try {
-          const ext = selectedImage.name.split('.').pop() || 'jpg';
-          const filePath = `feedback/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('profile-images')
-            .upload(filePath, selectedImage, { cacheControl: '3600', upsert: false });
-
-          if (uploadError) {
-            console.error('Feedback attachment upload error:', uploadError);
-          } else if (uploadData?.path) {
-            const { data: urlData } = supabase.storage
-              .from('profile-images')
-              .getPublicUrl(uploadData.path);
-            uploadedImageUrl = urlData.publicUrl;
+          const uploadResult = await uploadFeedbackImage(selectedImage, user.id);
+          
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error || 'Failed to upload image');
           }
+          
+          uploadedImageUrl = uploadResult.url;
         } catch (uploadException) {
-          console.error('Unexpected attachment upload error:', uploadException);
+          console.error('Unexpected feedback image upload error:', uploadException);
+          throw uploadException;
         }
       }
 
