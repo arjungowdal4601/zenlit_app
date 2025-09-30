@@ -194,9 +194,27 @@ export default function CompleteProfileOnboardingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Ensure user is authenticated
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    // Ensure user is authenticated and Supabase is reachable
+    let accessToken: string | null = null;
+
+    try {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.warn('Failed to fetch Supabase session:', error instanceof Error ? error.message : error);
+        alert('We could not verify your session. Please sign in again.');
+        router.push('/auth/signin');
+        return;
+      }
+
+      accessToken = data.session?.access_token ?? null;
+    } catch (sessionError) {
+      console.warn('Network error while fetching Supabase session:', sessionError instanceof Error ? sessionError.message : sessionError);
+      alert('We could not reach Supabase. Check your connection and try again.');
+      return;
+    }
+
+    if (!accessToken) {
       alert('Please sign in to update your profile.');
       router.push('/auth/signin');
       return;
@@ -229,7 +247,7 @@ export default function CompleteProfileOnboardingPage() {
       const response = await fetch('/api/profile/social', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: formData,
       });
