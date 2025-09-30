@@ -1,10 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabaseClient';
 
-export default function AuthCallbackPage() {
+const LoadingState = () => (
+  <div className="min-h-screen flex items-center justify-center bg-black">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+      <p className="text-white text-lg">Completing authentication...</p>
+      <p className="text-gray-400 text-sm mt-2">Please wait while we sign you in</p>
+    </div>
+  </div>
+);
+
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -48,13 +58,14 @@ export default function AuthCallbackPage() {
     handleAuthCallback();
   }, [router, searchParams]);
 
+  return <LoadingState />;
+}
+
+export default function AuthCallbackPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-white text-lg">Completing authentication...</p>
-        <p className="text-gray-400 text-sm mt-2">Please wait while we sign you in</p>
-      </div>
-    </div>
+    <Suspense fallback={<LoadingState />}>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
+
