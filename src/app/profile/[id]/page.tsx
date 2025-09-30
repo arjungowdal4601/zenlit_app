@@ -8,7 +8,7 @@ import AppHeader from '@/components/AppHeader';
 import SocialLinkButton from '@/components/SocialLinkButton';
 import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { 
   fetchUserProfile, 
   CompleteUserProfile, 
@@ -167,7 +167,7 @@ const OtherUserProfilePage = () => {
             ></div>
 
             {/* Profile Section */}
-            <div className="relative bg-black px-4 sm:px-6 pb-6">
+            <div className="relative bg-black px-4 sm:px-6 pb-3">
               {/* Profile Photo and Layout */}
               <div className="flex justify-between items-start pt-4">
                 {/* Left Side: Profile Photo and User Info */}
@@ -227,17 +227,13 @@ const OtherUserProfilePage = () => {
                 </div>
               </div>
 
-              {/* Bio - Full width below the profile section */}
-              <div className="mt-4">
-                <p className="text-white text-base leading-relaxed max-w-2xl" style={{ fontFamily: 'var(--font-inter)' }}>
-                  {userProfile.socialLinks?.bio || 'No bio available'}
-                </p>
-              </div>
+              {/* Bio - Full width below the profile section with line clamp */}
+              <BioWithClamp bioText={userProfile.socialLinks?.bio || 'No bio available'} />
             </div>
           </div>
 
           {/* Separator Line */}
-          <div className="mt-8 max-w-2xl mx-auto px-4">
+          <div className="mt-4 max-w-2xl mx-auto px-4">
             <div className="border-t border-gray-700"></div>
           </div>
 
@@ -289,6 +285,52 @@ const OtherUserProfilePage = () => {
         </div>
       </div>
     </AppLayout>
+  );
+};
+
+// Local component: reusing clamp logic for other user's profile
+const BioWithClamp: React.FC<{ bioText: string }> = ({ bioText }) => {
+  const [showFull, setShowFull] = useState(false);
+  const [clamped, setClamped] = useState(false);
+  const ref = useRef<HTMLParagraphElement | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const isClamped = el.scrollHeight > el.clientHeight + 1;
+    setClamped(isClamped);
+  }, [bioText, showFull]);
+
+  return (
+    <div className="mt-2">
+      <p
+        ref={ref}
+        className="text-white text-base leading-normal max-w-2xl"
+        style={
+          showFull
+            ? { fontFamily: 'var(--font-inter)' }
+            : {
+                fontFamily: 'var(--font-inter)',
+                display: '-webkit-box',
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }
+        }
+      >
+        {bioText}
+      </p>
+      {!showFull && clamped && (
+        <button
+          type="button"
+          onClick={() => setShowFull(true)}
+          className="text-blue-400 text-sm mt-1 hover:underline"
+          style={{ fontFamily: 'var(--font-inter)' }}
+        >
+          more
+        </button>
+      )}
+    </div>
   );
 };
 

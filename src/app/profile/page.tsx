@@ -25,6 +25,9 @@ const ProfileScreen = () => {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState<string | null>(null);
   const [postMenuOpen, setPostMenuOpen] = useState<string | null>(null);
+  const [showFullBio, setShowFullBio] = useState(false);
+  const bioRef = useRef<HTMLParagraphElement | null>(null);
+  const [bioTruncated, setBioTruncated] = useState(false);
   
   // Real data states
   const [userProfile, setUserProfile] = useState<CompleteUserProfile | null>(null);
@@ -56,6 +59,14 @@ const ProfileScreen = () => {
 
     loadUserData();
   }, []);
+
+  // Detect if bio is visually truncated when clamped
+  useEffect(() => {
+    const el = bioRef.current;
+    if (!el) return;
+    const truncated = el.scrollHeight > el.clientHeight + 1;
+    setBioTruncated(truncated);
+  }, [userProfile, showFullBio]);
 
   // Close dropdown on outside click and Escape key
   useEffect(() => {
@@ -249,7 +260,7 @@ const ProfileScreen = () => {
             ></div>
 
             {/* Profile Section */}
-            <div className="relative bg-black px-4 sm:px-6 pb-6">
+            <div className="relative bg-black px-4 sm:px-6 pb-3">
               {/* Profile Photo and Layout */}
               <div className="flex justify-between items-start pt-4">
                 {/* Left Side: Profile Photo and User Info */}
@@ -310,22 +321,46 @@ const ProfileScreen = () => {
               </div>
 
               {/* Bio - Full width below the profile section */}
-              <div className="mt-4">
-                <p className="text-white text-base leading-relaxed max-w-2xl" style={{ fontFamily: 'var(--font-inter)' }}>
+              <div className="mt-2">
+                <p
+                  ref={bioRef}
+                  className="text-white text-base leading-normal max-w-2xl"
+                  style={
+                    showFullBio
+                      ? { fontFamily: 'var(--font-inter)' }
+                      : {
+                          fontFamily: 'var(--font-inter)',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 4,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }
+                  }
+                >
                   {userProfile.socialLinks?.bio || 'No bio available.'}
                 </p>
+                {!showFullBio && bioTruncated && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFullBio(true)}
+                    className="text-blue-400 text-sm mt-1 hover:underline"
+                    style={{ fontFamily: 'var(--font-inter)' }}
+                  >
+                    more
+                  </button>
+                )}
               </div>
             </div>
           </div>
 
           {/* Separator Line */}
-          <div className="mt-8 max-w-2xl mx-auto px-4">
+          <div className="mt-4 max-w-2xl mx-auto px-4">
             <div className="border-t border-gray-700"></div>
           </div>
 
           {/* Posts Section */}
-          <div className="mt-6 space-y-3 max-w-2xl mx-auto px-4">
-            <h2 className="text-xl font-semibold text-white mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
+          <div className="mt-3 space-y-2 max-w-2xl mx-auto px-4">
+            <h2 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
               Posts
             </h2>
             

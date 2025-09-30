@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import { ArrowLeft, X, Check, Paperclip } from 'lucide-react';
+import { supabase } from '@/utils/supabaseClient';
 
 const FeedbackPage = () => {
   const router = useRouter();
@@ -70,14 +71,54 @@ const FeedbackPage = () => {
     }
 
     setIsSubmitting(true);
-    
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      // Ensure user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        setErrors({ feedbackText: 'Please sign in to submit feedback.' });
+        return;
+      }
+
+      // Upload attachment to existing public bucket (profile-images) if provided
+      let uploadedImageUrl: string | null = null;
+      if (selectedImage) {
+        try {
+          const ext = selectedImage.name.split('.').pop() || 'jpg';
+          const filePath = `feedback/${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('profile-images')
+            .upload(filePath, selectedImage, { cacheControl: '3600', upsert: false });
+
+          if (uploadError) {
+            console.error('Feedback attachment upload error:', uploadError);
+          } else if (uploadData?.path) {
+            const { data: urlData } = supabase.storage
+              .from('profile-images')
+              .getPublicUrl(uploadData.path);
+            uploadedImageUrl = urlData.publicUrl;
+          }
+        } catch (uploadException) {
+          console.error('Unexpected attachment upload error:', uploadException);
+        }
+      }
+
+      // Insert feedback into backend table
+      const { error: insertError } = await supabase
+        .from('feedback')
+        .insert({
+          user_id: user.id,
+          text: feedbackText.trim(),
+          image_url: uploadedImageUrl,
+        });
+
+      if (insertError) {
+        console.error('Error inserting feedback:', insertError);
+        throw insertError;
+      }
+
       // Show success message
       setShowSuccess(true);
-      
+
       // Reset form after success
       setTimeout(() => {
         setFeedbackText('');
@@ -88,9 +129,9 @@ const FeedbackPage = () => {
           fileInputRef.current.value = '';
         }
       }, 2000);
-      
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -214,7 +255,7 @@ const FeedbackPage = () => {
                 }}
                 placeholder="Tell us what you think about Zenlit. What features do you love? What could be improved? Any bugs or issues you've encountered?"
                 rows={6}
-                className={`w-full bg-black border-2 border-white rounded-xl px-4 py-3 text-gray-400 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 transition-colors ${
+                className={`w-full bg-black border border-white rounded-xl px-4 py-3 text-gray-400 placeholder-gray-400 resize-none focus:outline-none focus:ring-1 transition-colors ${
                   errors.feedbackText 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-white focus:ring-white'
@@ -230,6 +271,11 @@ const FeedbackPage = () => {
               <p className="mt-2 text-gray-400 text-sm" style={{ fontFamily: 'var(--font-inter)' }}>
                 {feedbackText.length}/1000 characters
               </p>
+              {feedbackText.trim().length > 0 && feedbackText.trim().length < 10 && !errors.feedbackText && (
+                <p className="mt-1 text-xs text-blue-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                  Enter at least 10 characters.
+                </p>
+              )}
             </div>
 
 
@@ -237,9 +283,9 @@ const FeedbackPage = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting || showSuccess}
+              disabled={isSubmitting || showSuccess || feedbackText.trim().length === 0}
               className={`w-full py-4 rounded-xl font-medium transition-all duration-300 ${
-                isSubmitting || showSuccess
+                isSubmitting || showSuccess || feedbackText.trim().length === 0
                   ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
               }`}
