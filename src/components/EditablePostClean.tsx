@@ -12,9 +12,10 @@ interface EditablePostProps {
   };
   initialContent?: string;
   onSave?: (content: string, image?: File) => void;
+  disabled?: boolean;
 }
 
-const EditablePost = ({ author, initialContent = '', onSave }: EditablePostProps) => {
+const EditablePost = ({ author, initialContent = '', onSave, disabled = false }: EditablePostProps) => {
   const [content, setContent] = useState(initialContent);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -128,7 +129,8 @@ const EditablePost = ({ author, initialContent = '', onSave }: EditablePostProps
         {/* Share Button */}
         <button
           onClick={handleSave}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+          disabled={disabled}
+          className={`px-4 py-2 ${disabled ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg transition-colors font-medium`}
         >
           Share
         </button>

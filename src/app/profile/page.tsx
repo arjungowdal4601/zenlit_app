@@ -6,6 +6,7 @@ import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import LogoutConfirmation from '@/components/LogoutConfirmation';
 import SocialLinkButton from '@/components/SocialLinkButton';
+import PostWithoutSocialLinks from '@/components/PostWithoutSocialLinks';
 import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
 import { MoreHorizontal, Edit, MessageSquare, LogOut, FileText } from 'lucide-react';
@@ -387,79 +388,57 @@ const ProfileScreen = () => {
             </h2>
             
             {posts.length === 0 ? (
-              /* Empty Posts Placeholder */
-              <div className="flex flex-col items-center justify-center py-16 px-4">
-                <div className="relative mb-6">
-                  <FileText className="w-16 h-16 text-gray-600" />
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gray-700 rounded-full flex items-center justify-center">
-                    <span className="text-gray-400 text-xs">0</span>
-                  </div>
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
+                  <FileText className="w-8 h-8 text-gray-400" />
                 </div>
-                <h3 className="text-gray-400 text-lg font-medium mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
-                  No posts yet
-                </h3>
-                <p className="text-gray-500 text-sm text-center max-w-xs" style={{ fontFamily: 'var(--font-inter)' }}>
-                  Share your thoughts and experiences with the community. Your first post is just a click away!
-                </p>
-                <div className="mt-6 w-full max-w-xs h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent"></div>
+                <h3 className="text-gray-300 text-lg font-medium mb-2">No posts yet</h3>
+                <p className="text-gray-500 text-sm">Share your first post to get started!</p>
               </div>
             ) : (
-              posts.map((post) => (
-                <div key={post.id} className="mb-3 relative">
-                  {/* 3-dots menu - Top Right */}
-                  <div className="absolute top-0 right-0 mt-2">
-                    <button
-                      onClick={() => togglePostMenu(post.id)}
-                      className="p-1 hover:bg-gray-800 rounded-full transition-colors"
-                      aria-label="Post options"
-                    >
-                      <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                    </button>
-                    
-                    {/* Dropdown Menu */}
-                    {postMenuOpen === post.id && (
-                      <div className="absolute right-0 mt-1 bg-gray-900 rounded-lg border border-gray-700 py-1 z-10 min-w-[120px]">
-                        <button
-                          onClick={() => handleDeletePost(post.id)}
-                          className="w-full text-left px-3 py-2 text-red-400 hover:bg-gray-800 transition-colors text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex space-x-4">
-                    {/* Profile Picture */}
-                    <div className="flex-shrink-0">
-                      <Image
-                        src={getProfilePictureUrl(userProfile.socialLinks)}
-                        alt={userProfile.profile.display_name || userProfile.profile.user_name}
-                        width={40}
-                        height={40}
-                        className="w-10 h-10 rounded-lg object-cover"
-                      />
-                    </div>
-                    
-                    {/* Post Content */}
-                    <div className="flex-1 min-w-0">
-                      {/* Author Info - No timestamp */}
-                      <div className="mb-2">
-                        <h3 className="text-white font-semibold text-base">{userProfile.profile.display_name || userProfile.profile.user_name}</h3>
-                        <span className="text-gray-400 text-sm">@{userProfile.profile.user_name}</span>
-                      </div>
+              posts.map((post, index) => (
+                <div key={post.id}>
+                  <div className="mb-3 relative">
+                    {/* 3-dots menu */}
+                    <div className="absolute top-0 right-0 mt-2 z-20">
+                      <button
+                        onClick={() => togglePostMenu(post.id)}
+                        className="p-1 text-gray-400 hover:text-white transition-colors"
+                      >
+                        <MoreHorizontal className="w-5 h-5" />
+                      </button>
                       
-                      {/* Post Text */}
-                      <p className="text-gray-100 text-base mb-4 leading-tight">
-                        {post.content}
-                      </p>
+                      {/* Dropdown menu */}
+                      {postMenuOpen === post.id && (
+                        <div className="absolute right-0 mt-1 w-32 bg-gray-800 rounded-md shadow-lg border border-gray-700 z-30">
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            className="w-full px-3 py-2 text-left text-red-400 hover:bg-gray-700 rounded-md text-sm"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
+
+                    <PostWithoutSocialLinks
+                        id={post.id}
+                        author={{
+                          name: userProfile?.profile.display_name || 'User',
+                          username: userProfile?.profile.user_name || 'user',
+                          avatar: getProfilePictureUrl(userProfile?.socialLinks || null),
+                          socialLinks: getSocialMediaLinks(userProfile?.socialLinks || null)
+                        }}
+                        content={post.text || ''}
+                        timestamp={new Date(post.created_at).toLocaleDateString()}
+                        image={post.image_url || undefined}
+                      />
                   </div>
                   
-                  {/* Post separator */}
-                  <div className="mt-2 mb-1">
-                    <div className="h-px bg-gray-600 w-full"></div>
-                  </div>
+                  {/* Separator Line between posts (not after the last post) */}
+                  {index < posts.length - 1 && (
+                    <div className="border-t border-gray-700 mb-3"></div>
+                  )}
                 </div>
               ))
             )}

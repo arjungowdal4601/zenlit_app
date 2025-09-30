@@ -8,8 +8,7 @@ export interface UserProfile {
   email?: string;
   date_of_birth?: string;
   gender?: string;
-  created_at: string;
-  updated_at: string;
+  account_created_at: string;
 }
 
 // Payload for updating the user's profile
@@ -41,11 +40,9 @@ export interface SocialLinksUpdateData {
 export interface UserPost {
   id: string;
   user_id: string;
-  content: string;
-  likes_count: number;
-  comments_count: number;
+  text: string | null;
+  image_url: string | null;
   created_at: string;
-  updated_at: string;
 }
 
 export interface CompleteUserProfile {
