@@ -1088,3 +1088,4 @@ import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageC
 };
 
 export default EditProfilePage;
+
