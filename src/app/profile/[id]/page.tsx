@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
@@ -8,7 +8,7 @@ import AppHeader from '@/components/AppHeader';
 import SocialLinkButton from '@/components/SocialLinkButton';
 import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { 
   fetchUserProfile, 
   CompleteUserProfile, 
@@ -20,6 +20,7 @@ import {
 
 const OtherUserProfilePage = () => {
   const params = useParams();
+  const router = useRouter();
   const idParam = (params?.id ?? '') as string;
 
   // State for user profile data
@@ -27,27 +28,30 @@ const OtherUserProfilePage = () => {
   const [posts, setPosts] = useState<UserPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [socialLinks, setSocialLinks] = useState<{
-    instagram: string | null;
-    linkedin: string | null;
-    twitter: string | null;
-  }>({ instagram: null, linkedin: null, twitter: null });
 
   // Fetch user data on mount
   useEffect(() => {
+    let isMounted = true;
+
     const loadUserData = async () => {
       if (!idParam) {
-        setError('Invalid user ID');
-        setLoading(false);
+        if (isMounted) {
+          setError('Invalid user ID');
+          setLoading(false);
+        }
         return;
       }
 
       try {
+        if (!isMounted) return;
+
         setLoading(true);
         setError(null);
-        
+
         const data = await fetchUserProfile(idParam);
-        
+
+        if (!isMounted) return;
+
         if (!data) {
           setError('User not found');
           setLoading(false);
@@ -56,17 +60,29 @@ const OtherUserProfilePage = () => {
 
         setUserProfile(data);
         setPosts(data.posts);
-        setSocialLinks(getSocialMediaLinks(data.socialLinks));
       } catch (err) {
-        console.error('Error loading user data:', err);
-        setError('Failed to load user profile');
+        if (isMounted) {
+          console.error('Error loading user data:', err);
+          setError('Failed to load user profile');
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUserData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [idParam]);
+
+  const normalizedSocialLinks = useMemo(
+    () => getSocialMediaLinks(userProfile?.socialLinks ?? null),
+    [userProfile?.socialLinks]
+  );
 
   // Loading state
   if (loading) {
@@ -118,7 +134,7 @@ const OtherUserProfilePage = () => {
             <p className="text-gray-300">{error || 'User not found.'}</p>
             {error && (
               <button
-                onClick={() => window.location.reload()}
+                onClick={() => router.refresh()}
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Try Again
@@ -130,9 +146,9 @@ const OtherUserProfilePage = () => {
     );
   }
 
-  const instagramUrl = ensureSocialUrl('instagram', socialLinks.instagram);
-  const linkedinUrl = ensureSocialUrl('linkedin', socialLinks.linkedin);
-  const twitterUrl = ensureSocialUrl('twitter', socialLinks.twitter);
+  const instagramUrl = ensureSocialUrl('instagram', normalizedSocialLinks.instagram);
+  const linkedinUrl = ensureSocialUrl('linkedin', normalizedSocialLinks.linkedin);
+  const twitterUrl = ensureSocialUrl('twitter', normalizedSocialLinks.twitter);
 
   return (
     <AppLayout>
@@ -167,7 +183,7 @@ const OtherUserProfilePage = () => {
             ></div>
 
             {/* Profile Section */}
-            <div className="relative bg-black px-4 sm:px-6 pb-6">
+            <div className="relative bg-black px-4 sm:px-6 pb-3">
               {/* Profile Photo and Layout */}
               <div className="flex justify-between items-start pt-4">
                 {/* Left Side: Profile Photo and User Info */}
@@ -227,17 +243,13 @@ const OtherUserProfilePage = () => {
                 </div>
               </div>
 
-              {/* Bio - Full width below the profile section */}
-              <div className="mt-4">
-                <p className="text-white text-base leading-relaxed max-w-2xl" style={{ fontFamily: 'var(--font-inter)' }}>
-                  {userProfile.socialLinks?.bio || 'No bio available'}
-                </p>
-              </div>
+              {/* Bio - Full width below the profile section with line clamp */}
+              <BioWithClamp bioText={userProfile.socialLinks?.bio || 'No bio available'} />
             </div>
           </div>
 
           {/* Separator Line */}
-          <div className="mt-8 max-w-2xl mx-auto px-4">
+          <div className="mt-4 max-w-2xl mx-auto px-4">
             <div className="border-t border-gray-700"></div>
           </div>
 
@@ -289,6 +301,52 @@ const OtherUserProfilePage = () => {
         </div>
       </div>
     </AppLayout>
+  );
+};
+
+// Local component: reusing clamp logic for other user's profile
+const BioWithClamp: React.FC<{ bioText: string }> = ({ bioText }) => {
+  const [showFull, setShowFull] = useState(false);
+  const [clamped, setClamped] = useState(false);
+  const ref = useRef<HTMLParagraphElement | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const isClamped = el.scrollHeight > el.clientHeight + 1;
+    setClamped(isClamped);
+  }, [bioText, showFull]);
+
+  return (
+    <div className="mt-2">
+      <p
+        ref={ref}
+        className="text-white text-base leading-normal max-w-2xl"
+        style={
+          showFull
+            ? { fontFamily: 'var(--font-inter)' }
+            : {
+                fontFamily: 'var(--font-inter)',
+                display: '-webkit-box',
+                WebkitLineClamp: 4,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }
+        }
+      >
+        {bioText}
+      </p>
+      {!showFull && clamped && (
+        <button
+          type="button"
+          onClick={() => setShowFull(true)}
+          className="text-blue-400 text-sm mt-1 hover:underline"
+          style={{ fontFamily: 'var(--font-inter)' }}
+        >
+          more
+        </button>
+      )}
+    </div>
   );
 };
 

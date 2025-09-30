@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import Image from 'next/image';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, Paperclip, X, Check } from 'lucide-react';
+import Image from 'next/image';
+import { supabase } from '@/utils/supabaseClient';
+import { uploadFeedbackImage } from '@/utils/supabaseStorage';
+import { compressImage, validateImageFile } from '@/utils/imageCompression';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
-import { ArrowLeft, X, Check, Paperclip } from 'lucide-react';
 
 const FeedbackPage = () => {
   const router = useRouter();
@@ -17,27 +20,34 @@ const FeedbackPage = () => {
   const [errors, setErrors] = useState<{ feedbackText?: string }>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
-        return;
-      }
-      
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
+    if (!file) return;
+
+    // Validate the image file
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error);
+      return;
+    }
+
+    try {
+      // Compress the image to meet the 550KB target used by our utility
+      const result = await compressImage(file);
+      if (!result.success || !result.file) {
+        alert(result.error || 'Failed to compress image below target size.');
         return;
       }
 
-      setSelectedImage(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      const compressedFile = result.file;
+      setSelectedImage(compressedFile);
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(compressedFile);
+      setImagePreview(previewUrl);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Failed to process image. Please try again.');
     }
   };
 
@@ -70,14 +80,48 @@ const FeedbackPage = () => {
     }
 
     setIsSubmitting(true);
-    
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      // Ensure user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        setErrors({ feedbackText: 'Please sign in to submit feedback.' });
+        return;
+      }
+
+      // Upload image if selected
+      let uploadedImageUrl = null;
+      if (selectedImage) {
+        try {
+          const uploadResult = await uploadFeedbackImage(selectedImage, user.id);
+          
+          if (!uploadResult.success) {
+            throw new Error(uploadResult.error || 'Failed to upload image');
+          }
+          
+          uploadedImageUrl = uploadResult.url;
+        } catch (uploadException) {
+          console.error('Unexpected feedback image upload error:', uploadException);
+          throw uploadException;
+        }
+      }
+
+      // Insert feedback into backend table
+      const { error: insertError } = await supabase
+        .from('feedback')
+        .insert({
+          user_id: user.id,
+          text: feedbackText.trim(),
+          image_url: uploadedImageUrl,
+        });
+
+      if (insertError) {
+        console.error('Error inserting feedback:', insertError);
+        throw insertError;
+      }
+
       // Show success message
       setShowSuccess(true);
-      
+
       // Reset form after success
       setTimeout(() => {
         setFeedbackText('');
@@ -88,9 +132,9 @@ const FeedbackPage = () => {
           fileInputRef.current.value = '';
         }
       }, 2000);
-      
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -214,7 +258,7 @@ const FeedbackPage = () => {
                 }}
                 placeholder="Tell us what you think about Zenlit. What features do you love? What could be improved? Any bugs or issues you've encountered?"
                 rows={6}
-                className={`w-full bg-black border-2 border-white rounded-xl px-4 py-3 text-gray-400 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 transition-colors ${
+                className={`w-full bg-black border border-white rounded-xl px-4 py-3 text-gray-400 placeholder-gray-400 resize-none focus:outline-none focus:ring-1 transition-colors ${
                   errors.feedbackText 
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-white focus:ring-white'
@@ -230,6 +274,11 @@ const FeedbackPage = () => {
               <p className="mt-2 text-gray-400 text-sm" style={{ fontFamily: 'var(--font-inter)' }}>
                 {feedbackText.length}/1000 characters
               </p>
+              {feedbackText.trim().length > 0 && feedbackText.trim().length < 10 && !errors.feedbackText && (
+                <p className="mt-1 text-xs text-blue-400" style={{ fontFamily: 'var(--font-inter)' }}>
+                  Enter at least 10 characters.
+                </p>
+              )}
             </div>
 
 
@@ -237,9 +286,9 @@ const FeedbackPage = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={isSubmitting || showSuccess}
+              disabled={isSubmitting || showSuccess || feedbackText.trim().length === 0}
               className={`w-full py-4 rounded-xl font-medium transition-all duration-300 ${
-                isSubmitting || showSuccess
+                isSubmitting || showSuccess || feedbackText.trim().length === 0
                   ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
                   : 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
               }`}

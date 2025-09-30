@@ -1,28 +1,74 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import { ArrowLeft, Camera, X, Check, Save, Upload, Edit, Instagram, Trash2 } from 'lucide-react';
 import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
 import Image from 'next/image';
+import {
+  fetchCurrentUserProfile,
+  getProfilePictureUrl,
+  getBannerUrl,
+  getSocialMediaLinks,
+  updateUserProfile,
+  updateSocialLinks,
+} from '@/utils/profileData';
+import { uploadProfileImage, replaceProfileImage } from '@/utils/supabaseStorage';
+import { supabase } from '@/utils/supabaseClient';
+import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageCompression';
 
-const EditProfilePage = () => {
+  const EditProfilePage = () => {
+    // Helper: extract username/handle from a social link or handle
+    const extractUsername = (value?: string | null) => {
+      if (!value) return 'No link added';
+      const trimmed = value.trim();
+      if (!trimmed) return 'No link added';
+      // If starts with @, treat remainder as username
+      if (trimmed.startsWith('@')) return trimmed.slice(1);
+      // If it's a full URL, parse the pathname and take last non-empty segment
+      try {
+        const u = new URL(trimmed);
+        const parts = u.pathname.split('/').filter(Boolean);
+        if (!parts.length) return u.hostname;
+        // Special handling for LinkedIn /in/<username>
+        const inIndex = parts.indexOf('in');
+        if (inIndex >= 0 && parts[inIndex + 1]) return parts[inIndex + 1];
+        return parts[parts.length - 1];
+      } catch {
+        // Not a URL: if it contains slashes, take last segment; else return as-is
+        const pseudoParts = trimmed.split('/').filter(Boolean);
+        return pseudoParts.length ? pseudoParts[pseudoParts.length - 1] : trimmed;
+      }
+    };
   const router = useRouter();
   
   // State for profile data
   const [profileData, setProfileData] = useState({
-    displayName: 'Alex Johnson',
-    bio: 'Software engineer passionate about AI and machine learning. Love hiking and exploring new technologies.',
-    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=b6e3f4',
+    displayName: '',
+    bio: '',
+    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Default&backgroundColor=b6e3f4',
+    bannerImage: null as string | null,
+  });
+
+  const [initialProfileData, setInitialProfileData] = useState({
+    displayName: '',
+    bio: '',
+    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Default&backgroundColor=b6e3f4',
     bannerImage: null as string | null,
   });
 
   // State for social links
   const [socialLinks, setSocialLinks] = useState({
     instagram: '',
-    twitter: '', // Will be renamed to 'x' in UI
+    x: '',
+    linkedin: ''
+  });
+
+  const [initialSocialLinks, setInitialSocialLinks] = useState({
+    instagram: '',
+    x: '',
     linkedin: ''
   });
 
@@ -54,10 +100,65 @@ const EditProfilePage = () => {
   const [bannerAnim, setBannerAnim] = useState(false);
   const [profileAnim, setProfileAnim] = useState(false);
   
+  // File states for tracking actual file uploads
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
   
   // File input refs
   const profileFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
+
+  const prepareImageForUpload = async (file: File, type: 'profile' | 'banner') => {
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      alert(validation.error ?? 'Please choose a valid image file.');
+      return;
+    }
+
+    try {
+      const compressionResult = await compressImage(file);
+      if (!compressionResult.success || !compressionResult.file) {
+        alert(compressionResult.error ?? 'Failed to process image. Please try a different file.');
+        return;
+      }
+
+      const { file: preparedFile, originalSize, compressedSize } = compressionResult;
+
+      if (originalSize && compressedSize && originalSize !== compressedSize) {
+        console.info(
+          `[Zenlit] ${type} image compressed from ${formatFileSize(originalSize)} to ${formatFileSize(compressedSize)}.`
+        );
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result;
+        if (typeof result !== 'string') {
+          return;
+        }
+
+        if (type === 'profile') {
+          setProfileData((prev) => ({ ...prev, profileImage: result }));
+        } else {
+          setProfileData((prev) => ({ ...prev, bannerImage: result }));
+        }
+      };
+      reader.onerror = () => {
+        console.error('Image preview generation failed for', type, 'image');
+        alert('Could not generate a preview for the selected image.');
+      };
+      reader.readAsDataURL(preparedFile);
+
+      if (type === 'profile') {
+        setProfileImageFile(preparedFile);
+      } else {
+        setBannerImageFile(preparedFile);
+      }
+    } catch (error) {
+      console.error('Image preparation error:', error);
+      alert('Failed to process image. Please try again with a different file.');
+    }
+  };
 
   const handleBack = () => {
     router.push('/profile');
@@ -111,6 +212,10 @@ const EditProfilePage = () => {
 
   const handleRemoveBannerImage = () => {
     setProfileData(prev => ({ ...prev, bannerImage: null }));
+    setBannerImageFile(null);
+    if (bannerFileInputRef.current) {
+      bannerFileInputRef.current.value = '';
+    }
     setShowBannerMenu(false);
   };
 
@@ -122,6 +227,10 @@ const EditProfilePage = () => {
 
   const handleRemoveProfileImage = () => {
     setProfileData(prev => ({ ...prev, profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&backgroundColor=b6e3f4' }));
+    setProfileImageFile(null);
+    if (profileFileInputRef.current) {
+      profileFileInputRef.current.value = '';
+    }
     setShowProfileMenu(false);
   };
 
@@ -162,9 +271,76 @@ const EditProfilePage = () => {
     
     setIsSubmitting(true);
     
+    // Initialize image URLs with current values
+    let profilePicUrl = profileData.profileImage;
+    let bannerUrl = profileData.bannerImage;
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Update profile (display name)
+      const profileUpdate = { display_name: profileData.displayName };
+      await updateUserProfile(profileUpdate);
+
+      // Get current user ID
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error('Error getting user:', authError);
+        alert('Authentication error. Please sign in again.');
+        return;
+      }
+
+      // Handle image uploads if files were selected
+      if (profileImageFile) {
+        try {
+          let uploadResult;
+          if (initialProfileData.profileImage && !initialProfileData.profileImage.includes('dicebear.com')) {
+            // Replace existing image
+            uploadResult = await replaceProfileImage(profileImageFile, user.id, 'profile', initialProfileData.profileImage);
+          } else {
+            // Upload new image
+            uploadResult = await uploadProfileImage(profileImageFile, user.id, 'profile');
+          }
+          
+          if (uploadResult.success && uploadResult.url) {
+            profilePicUrl = uploadResult.url;
+          } else {
+            console.error('Profile image upload failed:', uploadResult.error);
+          }
+        } catch (error) {
+          console.error('Error uploading profile image:', error);
+        }
+      }
+      
+      if (bannerImageFile) {
+        try {
+          let uploadResult;
+          if (initialProfileData.bannerImage) {
+            // Replace existing banner
+            uploadResult = await replaceProfileImage(bannerImageFile, user.id, 'banner', initialProfileData.bannerImage);
+          } else {
+            // Upload new banner
+            uploadResult = await uploadProfileImage(bannerImageFile, user.id, 'banner');
+          }
+          
+          if (uploadResult.success && uploadResult.url) {
+            bannerUrl = uploadResult.url;
+          } else {
+            console.error('Banner image upload failed:', uploadResult.error);
+          }
+        } catch (error) {
+          console.error('Error uploading banner image:', error);
+        }
+      }
+
+      // Update social links (bio + social links + images)
+      const socialUpdate = {
+        bio: profileData.bio || undefined,
+        instagram: socialLinks.instagram || undefined,
+        x_twitter: socialLinks.x || undefined,
+        linkedin: socialLinks.linkedin || undefined,
+        profile_pic_url: profilePicUrl || undefined,
+        banner_url: bannerUrl || undefined,
+      };
+      await updateSocialLinks(socialUpdate);
       
       setShowSuccess(true);
       setTimeout(() => {
@@ -175,8 +351,62 @@ const EditProfilePage = () => {
       console.error('Error updating profile:', error);
     } finally {
       setIsSubmitting(false);
+      // Refresh initial state after successful save
+      const updatedProfileData = {
+        ...profileData,
+        profileImage: profilePicUrl,
+        bannerImage: bannerUrl
+      };
+      setProfileData(updatedProfileData);
+      setInitialProfileData(updatedProfileData);
+      setInitialSocialLinks(socialLinks);
+      
+      // Clear file states
+      setProfileImageFile(null);
+      setBannerImageFile(null);
     }
   };
+
+  // Load current profile from backend
+  useEffect(() => {
+    (async () => {
+      const data = await fetchCurrentUserProfile();
+      if (!data) return;
+      const social = getSocialMediaLinks(data.socialLinks);
+      const displayName = data.profile.display_name || '';
+      const bio = social.bio || '';
+      const profileImage = getProfilePictureUrl(data.socialLinks);
+      const bannerImage = getBannerUrl(data.socialLinks);
+
+      const loadedProfile = { displayName, bio, profileImage, bannerImage };
+      setProfileData(loadedProfile);
+      setInitialProfileData(loadedProfile);
+
+      const loadedSocial = {
+        instagram: social.instagram || '',
+        x: social.twitter || '',
+        linkedin: social.linkedin || '',
+      };
+      setSocialLinks(loadedSocial);
+      setInitialSocialLinks(loadedSocial);
+    })();
+  }, []);
+
+  // Determine if form has changes
+  const hasChanges = useMemo(() => {
+    const profileChanged =
+      profileData.displayName !== initialProfileData.displayName ||
+      profileData.bio !== initialProfileData.bio ||
+      profileData.profileImage !== initialProfileData.profileImage ||
+      profileData.bannerImage !== initialProfileData.bannerImage;
+
+    const socialChanged =
+      socialLinks.instagram !== initialSocialLinks.instagram ||
+      socialLinks.x !== initialSocialLinks.x ||
+      socialLinks.linkedin !== initialSocialLinks.linkedin;
+
+    return profileChanged || socialChanged;
+  }, [profileData, socialLinks, initialProfileData, initialSocialLinks]);
 
   return (
     <AppLayout>
@@ -441,7 +671,7 @@ const EditProfilePage = () => {
                           Instagram
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.instagram || 'No link added'}
+                          {extractUsername(socialLinks.instagram)}
                         </p>
                       </div>
                     </div>
@@ -456,11 +686,10 @@ const EditProfilePage = () => {
                         setTempSocialInput(socialLinks.instagram);
                         setModalStates(prev => ({ ...prev, instagram: true }));
                       }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit
+                      <Edit className="w-4 h-4" aria-label="Edit link" />
                     </button>
                   </div>
                 </div>
@@ -485,7 +714,7 @@ const EditProfilePage = () => {
                           X
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.twitter || 'No link added'}
+                          {extractUsername(socialLinks.x)}
                         </p>
                       </div>
                     </div>
@@ -497,14 +726,13 @@ const EditProfilePage = () => {
                         e.preventDefault();
                         setIsSubmitting(false);
                        
-                        setTempSocialInput(socialLinks.twitter);
+                        setTempSocialInput(socialLinks.x);
                         setModalStates(prev => ({ ...prev, x: true }));
                       }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit
+                      <Edit className="w-4 h-4" aria-label="Edit link" />
                     </button>
                   </div>
                 </div>
@@ -529,7 +757,7 @@ const EditProfilePage = () => {
                           LinkedIn
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.linkedin || 'No link added'}
+                          {extractUsername(socialLinks.linkedin)}
                         </p>
                       </div>
                     </div>
@@ -544,11 +772,10 @@ const EditProfilePage = () => {
                         setTempSocialInput(socialLinks.linkedin);
                         setModalStates(prev => ({ ...prev, linkedin: true }));
                       }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit
+                      <Edit className="w-4 h-4" aria-label="Edit link" />
                     </button>
                   </div>
                 </div>
@@ -567,8 +794,12 @@ const EditProfilePage = () => {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:transform-none disabled:shadow-none font-medium flex items-center justify-center gap-2"
+                disabled={!hasChanges || isSubmitting}
+                className={`flex-1 px-6 py-3 rounded-lg transition-all duration-300 font-medium flex items-center justify-center gap-2 ${
+                  hasChanges && !isSubmitting
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
+                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }`}
                 style={{ fontFamily: 'var(--font-inter)' }}
               >
                 {isSubmitting ? (
@@ -591,15 +822,13 @@ const EditProfilePage = () => {
             ref={profileFileInputRef}
             type="file"
             accept="image/*"
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  setProfileData(prev => ({ ...prev, profileImage: event.target?.result as string }));
-                };
-                reader.readAsDataURL(file);
+              if (!file) {
+                return;
               }
+              await prepareImageForUpload(file, 'profile');
+              e.target.value = '';
             }}
             className="hidden"
           />
@@ -607,15 +836,13 @@ const EditProfilePage = () => {
             ref={bannerFileInputRef}
             type="file"
             accept="image/*"
-            onChange={(e) => {
+            onChange={async (e) => {
               const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  setProfileData(prev => ({ ...prev, bannerImage: event.target?.result as string }));
-                };
-                reader.readAsDataURL(file);
+              if (!file) {
+                return;
               }
+              await prepareImageForUpload(file, 'banner');
+              e.target.value = '';
             }}
             className="hidden"
           />
@@ -724,7 +951,7 @@ const EditProfilePage = () => {
                       type="button"
                       aria-label="Remove X"
                       onClick={() => {
-                        setSocialLinks(prev => ({ ...prev, twitter: '' }));
+                        setSocialLinks(prev => ({ ...prev, x: '' }));
                         setModalStates(prev => ({ ...prev, x: false }));
                         setTempSocialInput('');
                       }}
@@ -751,7 +978,7 @@ const EditProfilePage = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        setSocialLinks(prev => ({ ...prev, twitter: tempSocialInput }));
+                        setSocialLinks(prev => ({ ...prev, x: tempSocialInput }));
                         setModalStates(prev => ({ ...prev, x: false }));
                         setTempSocialInput('');
                       }}
@@ -861,4 +1088,3 @@ const EditProfilePage = () => {
 };
 
 export default EditProfilePage;
-
