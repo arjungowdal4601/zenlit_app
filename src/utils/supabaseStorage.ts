@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 
 const PROFILE_IMAGES_BUCKET = 'profile-images';
 const FEEDBACK_BUCKET = 'feedback';
+const POSTS_BUCKET = 'posts';
 
 const cryptoApi: Crypto | undefined =
   typeof globalThis !== 'undefined' && 'crypto' in globalThis
@@ -27,6 +28,9 @@ const buildObjectPath = (userId: string, imageType: 'profile' | 'banner', extens
 const buildFeedbackObjectPath = (userId: string, extension: string) =>
   `${userId}/feedback_${uniqueSuffix()}.${extension}`;
 
+const buildPostObjectPath = (userId: string, extension: string) =>
+  `${userId}/post_${uniqueSuffix()}.${extension}`;
+
 const normalizeStoragePath = (path: string): string => {
   const token = `${PROFILE_IMAGES_BUCKET}/`;
   return path.includes(token) ? path.split(token)[1] : path;
@@ -34,6 +38,11 @@ const normalizeStoragePath = (path: string): string => {
 
 const normalizeFeedbackStoragePath = (path: string): string => {
   const token = `${FEEDBACK_BUCKET}/`;
+  return path.includes(token) ? path.split(token)[1] : path;
+};
+
+const normalizePostStoragePath = (path: string): string => {
+  const token = `${POSTS_BUCKET}/`;
   return path.includes(token) ? path.split(token)[1] : path;
 };
 
@@ -254,6 +263,103 @@ export function getFeedbackImageUrl(path: string): string {
   const normalizedPath = normalizeFeedbackStoragePath(path);
   const { data } = supabase.storage
     .from(FEEDBACK_BUCKET)
+    .getPublicUrl(normalizedPath);
+  
+  return data.publicUrl;
+}
+
+/**
+ * Upload a post image to Supabase storage
+ */
+export async function uploadPostImage(
+  file: File,
+  userId: string
+): Promise<UploadResult> {
+  try {
+    // Import compressImage function
+    const { compressImage } = await import('./imageCompression');
+    
+    // Compress the image before uploading
+    const compressionResult = await compressImage(file);
+    
+    if (!compressionResult.success || !compressionResult.file) {
+      return {
+        success: false,
+        error: compressionResult.error || 'Failed to compress image.',
+      };
+    }
+    
+    const compressedFile = compressionResult.file;
+    const extension = sanitizeExtension(compressedFile);
+    const objectPath = buildPostObjectPath(userId, extension);
+
+    const { data, error } = await supabase.storage
+      .from(POSTS_BUCKET)
+      .upload(objectPath, compressedFile, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error || !data) {
+      console.error('Post image upload error:', error);
+      return {
+        success: false,
+        error: 'Failed to upload post image. Please try again.',
+      };
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(POSTS_BUCKET)
+      .getPublicUrl(data.path);
+
+    return {
+      success: true,
+      url: urlData.publicUrl,
+      path: data.path,
+    };
+  } catch (error) {
+    console.error('Unexpected post image upload error:', error);
+    return {
+      success: false,
+      error: 'An unexpected error occurred during post image upload.',
+    };
+  }
+}
+
+/**
+ * Delete a post image from Supabase storage
+ */
+export async function deletePostImage(imagePath: string): Promise<boolean> {
+  try {
+    const normalizedPath = normalizePostStoragePath(imagePath);
+
+    if (!normalizedPath) {
+      return true;
+    }
+
+    const { error } = await supabase.storage
+      .from(POSTS_BUCKET)
+      .remove([normalizedPath]);
+
+    if (error) {
+      console.error('Post image delete error:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Unexpected post image delete error:', error);
+    return false;
+  }
+}
+
+/**
+ * Get public URL for a post image in storage
+ */
+export function getPostImageUrl(path: string): string {
+  const normalizedPath = normalizePostStoragePath(path);
+  const { data } = supabase.storage
+    .from(POSTS_BUCKET)
     .getPublicUrl(normalizedPath);
   
   return data.publicUrl;

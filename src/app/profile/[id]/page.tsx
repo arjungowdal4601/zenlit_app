@@ -289,8 +289,21 @@ const OtherUserProfilePage = () => {
 
                         {/* Post Text */}
                         <p className="text-gray-300 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {post.content}
+                          {post.text}
                         </p>
+
+                        {/* Post Image */}
+                        {post.image_url && (
+                          <div className="mt-3">
+                            <Image
+                              src={post.image_url}
+                              alt="Post image"
+                              width={400}
+                              height={300}
+                              className="rounded-lg object-cover max-w-full h-auto"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
