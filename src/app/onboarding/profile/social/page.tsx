@@ -3,13 +3,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLayout from '@/components/AppLayout';
-import AppHeader from '@/components/AppHeader';
 import { Camera, X, Check, Save, Upload, Edit, Instagram, Trash2, ArrowLeft } from 'lucide-react';
 import { FaXTwitter, FaLinkedin } from 'react-icons/fa6';
 import Image from 'next/image';
+import { supabase } from '@/utils/supabaseClient';
 
 export default function CompleteProfileOnboardingPage() {
   const router = useRouter();
+
+  // Initial state for comparison
+  const initialState = {
+    bio: '',
+    profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4',
+    bannerImage: null as string | null,
+    socialLinks: {
+      instagram: '',
+      twitter: '',
+      linkedin: '',
+    }
+  };
 
   // State for profile data (no display name here)
   const [profileData, setProfileData] = useState({
@@ -24,6 +36,10 @@ export default function CompleteProfileOnboardingPage() {
     twitter: '',
     linkedin: '',
   });
+
+  // File states for tracking actual file uploads
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [bannerImageFile, setBannerImageFile] = useState<File | null>(null);
 
   // Social validation state
   const [socialValidation, setSocialValidation] = useState({
@@ -41,7 +57,6 @@ export default function CompleteProfileOnboardingPage() {
 
   // Temporary input state for modal editing
   const [tempSocialInput, setTempSocialInput] = useState('');
-  const [currentEditingPlatform, setCurrentEditingPlatform] = useState<'instagram' | 'x' | 'linkedin' | null>(null);
 
   // State for form errors (bio only here)
   const [errors, setErrors] = useState<{ bio: string }>({ bio: '' });
@@ -57,6 +72,18 @@ export default function CompleteProfileOnboardingPage() {
   // File input refs
   const profileFileInputRef = useRef<HTMLInputElement>(null);
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Check if form has changes
+  const hasChanges = () => {
+    return (
+      profileData.bio !== initialState.bio ||
+      profileImageFile !== null ||
+      bannerImageFile !== null ||
+      socialLinks.instagram !== initialState.socialLinks.instagram ||
+      socialLinks.twitter !== initialState.socialLinks.twitter ||
+      socialLinks.linkedin !== initialState.socialLinks.linkedin
+    );
+  };
 
   // Regex validation functions for social links (reused)
   const validateInstagram = (url: string): { isValid: boolean; message: string } => {
@@ -86,20 +113,22 @@ export default function CompleteProfileOnboardingPage() {
     return { isValid: true, message: '' };
   };
 
-  // Handle social link changes with validation
   const handleSocialLinkChange = (platform: keyof typeof socialLinks, value: string) => {
     setSocialLinks(prev => ({ ...prev, [platform]: value }));
-    let validation;
-    switch (platform) {
-      case 'instagram':
-        validation = validateInstagram(value); break;
-      case 'twitter':
-        validation = validateTwitter(value); break;
-      case 'linkedin':
-        validation = validateLinkedIn(value); break;
-      default:
-        validation = { isValid: true, message: '' };
-    }
+
+    const validation = (() => {
+      switch (platform) {
+        case 'instagram':
+          return validateInstagram(value);
+        case 'twitter':
+          return validateTwitter(value);
+        case 'linkedin':
+          return validateLinkedIn(value);
+        default:
+          return { isValid: true, message: '' };
+      }
+    })();
+
     setSocialValidation(prev => ({ ...prev, [platform]: validation }));
   };
 
@@ -122,11 +151,19 @@ export default function CompleteProfileOnboardingPage() {
 
   // Banner image handlers
   const handleBannerImageSelect = () => { bannerFileInputRef.current?.click(); setShowBannerMenu(false); };
-  const handleRemoveBannerImage = () => { setProfileData(prev => ({ ...prev, bannerImage: null })); setShowBannerMenu(false); };
+  const handleRemoveBannerImage = () => { 
+    setProfileData(prev => ({ ...prev, bannerImage: null })); 
+    setBannerImageFile(null);
+    setShowBannerMenu(false); 
+  };
 
   // Profile image handlers
   const handleProfileImageSelect = () => { profileFileInputRef.current?.click(); setShowProfileMenu(false); };
-  const handleRemoveProfileImage = () => { setProfileData(prev => ({ ...prev, profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4' })); setShowProfileMenu(false); };
+  const handleRemoveProfileImage = () => { 
+    setProfileData(prev => ({ ...prev, profileImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Onboarding&backgroundColor=b6e3f4' })); 
+    setProfileImageFile(null);
+    setShowProfileMenu(false); 
+  };
 
   // Generic input change
   const handleInputChange = (field: keyof typeof profileData, value: string) => {
@@ -136,25 +173,105 @@ export default function CompleteProfileOnboardingPage() {
 
   const validateForm = () => {
     const newErrors = { bio: '' } as { bio: string };
-    if (profileData.bio.length > 500) newErrors.bio = 'Bio must be less than 500 characters';
+    let isValid = true;
+    
+    // Validate bio length
+    if (profileData.bio.length > 500) {
+      newErrors.bio = 'Bio must be 500 characters or less';
+      isValid = false;
+    }
+    
+    // Check social link validations
+    const socialValidationErrors = Object.values(socialValidation).some(validation => !validation.isValid);
+    if (socialValidationErrors) {
+      isValid = false;
+    }
+    
     setErrors(newErrors);
-    return Object.values(newErrors).every(e => e === '');
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
-    setIsSubmitting(true);
+
+    // Ensure user is authenticated and Supabase is reachable
+    let accessToken: string | null = null;
+
     try {
-      // Simulate API call (reuse same behavior as Edit Profile)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.warn('Failed to fetch Supabase session:', error instanceof Error ? error.message : error);
+        alert('We could not verify your session. Please sign in again.');
+        router.push('/auth/signin');
+        return;
+      }
+
+      accessToken = data.session?.access_token ?? null;
+    } catch (sessionError) {
+      console.warn('Network error while fetching Supabase session:', sessionError instanceof Error ? sessionError.message : sessionError);
+      alert('We could not reach Supabase. Check your connection and try again.');
+      return;
+    }
+
+    if (!accessToken) {
+      alert('Please sign in to update your profile.');
+      router.push('/auth/signin');
+      return;
+    }
+
+    if (!validateForm()) {
+      alert('Please fix the validation errors before saving.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+
+      // Add text data
+      formData.append('bio', profileData.bio);
+      formData.append('instagram', socialLinks.instagram);
+      formData.append('twitter', socialLinks.twitter);
+      formData.append('linkedin', socialLinks.linkedin);
+
+      // Add image files if they exist
+      if (profileImageFile) {
+        formData.append('profileImage', profileImageFile);
+      }
+      if (bannerImageFile) {
+        formData.append('bannerImage', bannerImageFile);
+      }
+
+      const response = await fetch('/api/profile/social', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert('Please sign in to continue.');
+          router.push('/auth/signin');
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update profile');
+      }
+
+      // Show success message
       setShowSuccess(true);
       setTimeout(() => {
         setShowSuccess(false);
-        // Remain on page after saving, as in Edit Profile
+        router.push('/radar');
       }, 2000);
+
     } catch (error) {
       console.error('Error updating profile:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -391,7 +508,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('instagram'); setTempSocialInput(socialLinks.instagram); setModalStates(prev => ({ ...prev, instagram: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.instagram); setModalStates(prev => ({ ...prev, instagram: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -420,7 +537,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('x'); setTempSocialInput(socialLinks.twitter); setModalStates(prev => ({ ...prev, x: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.twitter); setModalStates(prev => ({ ...prev, x: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -449,7 +566,7 @@ export default function CompleteProfileOnboardingPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setCurrentEditingPlatform('linkedin'); setTempSocialInput(socialLinks.linkedin); setModalStates(prev => ({ ...prev, linkedin: true })); }}
+                      onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.linkedin); setModalStates(prev => ({ ...prev, linkedin: true })); }}
                       className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -473,8 +590,12 @@ export default function CompleteProfileOnboardingPage() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:transform-none disabled:shadow-none font-medium flex items-center justify-center gap-2"
+                disabled={!hasChanges() || isSubmitting}
+                className={`flex-1 px-6 py-3 rounded-lg transition-all duration-300 font-medium flex items-center justify-center gap-2 ${
+                  hasChanges() && !isSubmitting
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
+                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                }`}
                 style={{ fontFamily: 'var(--font-inter)' }}
               >
                 {isSubmitting ? (
@@ -496,10 +617,24 @@ export default function CompleteProfileOnboardingPage() {
           <input
             ref={profileFileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
+                // Validate file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                  alert('Image size must be less than 10MB');
+                  return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                  alert('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+                  return;
+                }
+                
+                setProfileImageFile(file);
                 const reader = new FileReader();
                 reader.onload = (event) => {
                   setProfileData(prev => ({ ...prev, profileImage: event.target?.result as string }));
@@ -512,10 +647,24 @@ export default function CompleteProfileOnboardingPage() {
           <input
             ref={bannerFileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/gif"
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
+                // Validate file size (10MB limit)
+                if (file.size > 10 * 1024 * 1024) {
+                  alert('Image size must be less than 10MB');
+                  return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                  alert('Please select a valid image file (JPEG, PNG, WebP, or GIF)');
+                  return;
+                }
+                
+                setBannerImageFile(file);
                 const reader = new FileReader();
                 reader.onload = (event) => {
                   setProfileData(prev => ({ ...prev, bannerImage: event.target?.result as string }));
@@ -550,7 +699,7 @@ export default function CompleteProfileOnboardingPage() {
                     <button
                       type="button"
                       aria-label="Remove Instagram"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, instagram: '' })); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('instagram', ''); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -571,7 +720,7 @@ export default function CompleteProfileOnboardingPage() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, instagram: tempSocialInput })); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('instagram', tempSocialInput); setModalStates(prev => ({ ...prev, instagram: false })); setTempSocialInput(''); }}
                       className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -614,7 +763,7 @@ export default function CompleteProfileOnboardingPage() {
                     <button
                       type="button"
                       aria-label="Remove X"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, twitter: '' })); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('twitter', ''); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -635,7 +784,7 @@ export default function CompleteProfileOnboardingPage() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, twitter: tempSocialInput })); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('twitter', tempSocialInput); setModalStates(prev => ({ ...prev, x: false })); setTempSocialInput(''); }}
                       className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
@@ -678,7 +827,7 @@ export default function CompleteProfileOnboardingPage() {
                     <button
                       type="button"
                       aria-label="Remove LinkedIn"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, linkedin: '' })); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('linkedin', ''); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
                       className="p-2 rounded-lg text-red-500 hover:text-red-400 hover:bg-gray-800"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -699,7 +848,7 @@ export default function CompleteProfileOnboardingPage() {
                   <div className="flex gap-3">
                     <button
                       type="button"
-                      onClick={() => { setSocialLinks(prev => ({ ...prev, linkedin: tempSocialInput })); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
+                      onClick={() => { handleSocialLinkChange('linkedin', tempSocialInput); setModalStates(prev => ({ ...prev, linkedin: false })); setTempSocialInput(''); }}
                       className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >

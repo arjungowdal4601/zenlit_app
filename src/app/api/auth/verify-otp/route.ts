@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/utils/supabaseClient';
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,15 +8,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
-    // Accept only the fixed demo code 000000
-    const ok = code === '000000';
-    if (!ok) {
-      return NextResponse.json({ error: 'Invalid or expired code' }, { status: 400 });
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: 'email',
+    });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    // In a real app, create session here; for now just respond ok for onboarding
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch (error) {
+    console.error('OTP verification error:', error);
     return NextResponse.json({ error: 'Bad Request' }, { status: 400 });
   }
 }

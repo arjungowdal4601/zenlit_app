@@ -34,18 +34,25 @@ const VisibilityControl: React.FC = () => {
       {/* Header with Global Visibility Toggle */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
-          <span className="text-white font-medium text-sm">Visibility</span>
+          <span className="text-white font-semibold text-sm tracking-wide">Visibility</span>
           <button
             onClick={handleVisibilityToggle}
-            className={mergeClassNames(
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none',
-              isVisible ? 'bg-blue-600' : 'bg-gray-600',
-            )}
+            aria-label="Toggle visibility"
+            className='relative inline-flex h-6 w-12 items-center rounded-full bg-transparent p-0.5 focus:outline-none'
           >
+            {/* Track */}
+            <span
+              aria-hidden
+              className={mergeClassNames(
+                'absolute inset-0 rounded-full transition-colors duration-200 ring-1',
+                isVisible ? 'bg-[#1d9bf0] ring-[#1d9bf0]/60' : 'bg-gray-600/70 ring-white/20'
+              )}
+            />
+            {/* Knob */}
             <span
               className={mergeClassNames(
-                'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200',
-                isVisible ? 'translate-x-6' : 'translate-x-1',
+                'relative inline-flex h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200',
+                isVisible ? 'translate-x-6' : 'translate-x-0'
               )}
             />
           </button>
