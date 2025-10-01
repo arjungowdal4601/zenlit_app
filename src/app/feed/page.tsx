@@ -1,109 +1,89 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import Post from '@/components/Post';
+import VisibilityControl from '@/components/VisibilityControl';
 import { useVisibility } from '@/contexts/VisibilityContext';
-
-// Sample posts data
-const samplePosts = [
-  {
-    id: '1',
-    author: {
-      name: 'Alex Johnson',
-      username: 'alexj',
-      socialLinks: {
-        instagram: 'alexj_dev',
-        linkedin: 'alex-johnson-dev',
-        twitter: 'alexjohnson_ai',
-      },
-    },
-    content:
-      'Just finished reading an amazing book on machine learning! The concepts around neural networks are fascinating. Anyone else diving into AI lately? 🤖📚',
-    timestamp: '2h',
-  },
-  {
-    id: '2',
-    author: {
-      name: 'Sarah Chen',
-      username: 'sarahc',
-      socialLinks: {
-        instagram: 'sarahchen_design',
-        linkedin: 'sarah-chen-ux',
-        twitter: 'sarahdesigns',
-      },
-    },
-    content:
-      'Beautiful sunset from my balcony today. Sometimes you need to pause and appreciate the simple moments in life.',
-    image: '/next.svg', // Using existing asset as placeholder
-    timestamp: '4h',
-  },
-  {
-    id: '3',
-    author: {
-      name: 'Mike Rodriguez',
-      username: 'mikerod',
-      socialLinks: {
-        instagram: 'marcus_startup',
-        linkedin: 'marcus-rodriguez-ceo',
-        twitter: 'marcusfintech',
-      },
-    },
-    content:
-      'Working on a new React project and loving the new features in Next.js 14. The app directory structure makes everything so much cleaner!',
-    timestamp: '6h',
-  },
-  {
-    id: '4',
-    author: {
-      name: 'Emma Wilson',
-      username: 'emmaw',
-      socialLinks: {
-        instagram: 'emmaw_coffee',
-        linkedin: 'emma-wilson-dev',
-        twitter: 'emmawilson_code',
-      },
-    },
-    content:
-      "Coffee shop vibes today ☕️ Perfect place to get some coding done. What's your favorite place to work from?",
-    image: '/vercel.svg', // Using existing asset as placeholder
-    timestamp: '8h',
-  },
-  {
-    id: '5',
-    author: {
-      name: 'David Kim',
-      username: 'davidk',
-      socialLinks: {
-        instagram: 'davidk_fullstack',
-        linkedin: 'david-kim-developer',
-        twitter: 'davidkim_dev',
-      },
-    },
-    content:
-      'Just deployed my first full-stack application! The feeling of seeing your code come to life is unmatched. Onto the next challenge! 🚀',
-    timestamp: '12h',
-  },
-  {
-    id: '6',
-    author: {
-      name: 'Lisa Thompson',
-      username: 'lisat',
-      socialLinks: {
-        instagram: 'lisat_nature',
-        linkedin: 'lisa-thompson-explorer',
-        twitter: 'lisathompson_hike',
-      },
-    },
-    content:
-      'Exploring the mountains this weekend. Nature has a way of clearing your mind and sparking creativity.',
-    image: '/globe.svg', // Using existing asset as placeholder
-    timestamp: '1d',
-  },
-];
+import { getNearbyUsersPosts, type FeedPost } from '@/utils/feedData';
 
 const FeedScreen = () => {
-  const { selectedAccounts } = useVisibility();
+  const { selectedAccounts, isVisible, locationData, currentUserId } = useVisibility();
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNearbyPosts = async () => {
+      if (!isVisible || !locationData || !currentUserId) {
+        console.log('Missing required data for fetching nearby posts:', {
+          isVisible,
+          hasLocationData: !!locationData,
+          hasCurrentUserId: !!currentUserId
+        });
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const nearbyPosts = await getNearbyUsersPosts(
+          currentUserId,
+          locationData.lat_short,
+          locationData.long_short
+        );
+        
+        setPosts(nearbyPosts);
+        console.log(`Loaded ${nearbyPosts.length} posts from nearby users`);
+      } catch (err) {
+        console.error('Error fetching nearby posts:', err);
+        setError('Failed to load posts from nearby users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNearbyPosts();
+  }, [isVisible, locationData, currentUserId]);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <AppHeader title="Feed" />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-500">Loading posts from nearby users...</div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <AppHeader title="Feed" />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-red-500">{error}</div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (posts.length === 0) {
+    return (
+      <AppLayout>
+        <AppHeader title="Feed" />
+        <div className="flex flex-col justify-center items-center h-64 text-center px-4">
+          <div className="text-gray-500 mb-2">No posts from nearby users</div>
+          <div className="text-sm text-gray-400">
+            Make sure you're visible on Radar and there are other users nearby
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -113,7 +93,7 @@ const FeedScreen = () => {
 
           {/* Posts - card-based layout */}
           <div className="pb-8">
-            {samplePosts.map((post) => (
+            {posts.map((post) => (
               <Post
                 key={post.id}
                 id={post.id}

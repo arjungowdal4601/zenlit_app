@@ -165,7 +165,7 @@ const EditablePost = ({ author, initialContent = '', onSave, disabled = false }:
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="What's happening?"
+                placeholder="Share your thoughts with the world! What's on your mind today?"
                 className="w-full bg-transparent text-gray-100 placeholder-gray-400 text-base resize-none border-none outline-none min-h-[120px] leading-relaxed"
                 style={{ fontFamily: 'inherit' }}
               />

@@ -1,21 +1,22 @@
 "use client";
 
-import { Paperclip, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface Props {
   onSend: (text: string) => void;
   value?: string;
   onChange?: (value: string) => void;
+  disabled?: boolean;
 }
 
-const Composer = ({ onSend, value, onChange }: Props) => {
+const Composer = ({ onSend, value, onChange, disabled = false }: Props) => {
   const [inner, setInner] = useState("");
   const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   const val = value !== undefined ? value : inner;
 
-  const canSend = useMemo(() => val.trim().length > 0, [val]);
+  const canSend = useMemo(() => !disabled && val.trim().length > 0, [val, disabled]);
 
   useEffect(() => {
     const ta = taRef.current;
@@ -42,20 +43,19 @@ const Composer = ({ onSend, value, onChange }: Props) => {
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-black/80 backdrop-blur supports-[backdrop-filter]:bg-black/60 border-t border-slate-800" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="max-w-2xl mx-auto px-4 py-3">
         <div className="flex items-end gap-2">
-          <div className="flex-1 min-h-[40px] bg-black rounded-2xl px-3 py-2 border border-white">
+          <div className={`flex-1 min-h-[40px] rounded-2xl px-3 py-2 border ${disabled ? 'bg-slate-900 border-slate-700 opacity-60' : 'bg-black border-white'}`}>
             <textarea
               ref={taRef}
-              className="w-full resize-none bg-transparent outline-none text-sm text-white"
+              className={`w-full resize-none bg-transparent outline-none text-sm ${disabled ? 'text-gray-400 cursor-not-allowed' : 'text-white'}`}
               rows={1}
               value={val}
               onChange={(e) => handleChange(e.target.value)}
+              disabled={disabled}
+              placeholder={disabled ? 'Chat is read-only. Out of proximity.' : 'Type a message'}
             />
           </div>
-          <button className="h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-white" aria-label="Attach">
-            <Paperclip className="text-white" size={20} />
-          </button>
           <button onClick={handleSend} disabled={!canSend} className="h-10 w-10 flex items-center justify-center rounded-xl focus:outline-none focus:ring-2 focus:ring-white disabled:cursor-not-allowed" aria-label="Send">
-            <Send size={18} className="text-white" />
+            <Send size={18} className={disabled ? "text-gray-500" : "text-white"} />
           </button>
         </div>
       </div>

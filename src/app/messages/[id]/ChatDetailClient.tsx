@@ -1,45 +1,93 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import AppLayout from "../../../components/AppLayout";
 import ChatHeader from "../../../components/messaging/ChatHeader";
 import DayDivider from "../../../components/messaging/DayDivider";
 import MessageBubble from "../../../components/messaging/MessageBubble";
 import Composer from "@/components/messaging/Composer";
 import {
-  findChatById,
-  getMessagesForChat,
+  // findChatById,
+  // getMessagesForChat,
   groupByDay,
-  isAnonymousChat,
+  // isAnonymousChat,
   type Message,
 } from "@/components/messaging/data";
+import { useVisibility } from "@/contexts/VisibilityContext";
+import { getNearbyUsers } from "@/utils/locationService";
+import { getMessagesBetweenUsers, sendTextMessage } from "@/utils/messagesData";
 
 interface ChatDetailClientProps {
-  chatId: string;
+  chatId: string; // other participant user id
 }
 
 export default function ChatDetailClient({ chatId }: ChatDetailClientProps) {
-  const chat = findChatById(chatId);
+  const { currentUserId, locationData } = useVisibility();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [anonymous, setAnonymous] = useState<boolean>(true);
+  const [title, setTitle] = useState<string>("Anonymous");
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
 
-  // Seeded messages for this chat; keep local state for demo send
-  const [messages, setMessages] = useState<Message[]>(() => getMessagesForChat(chatId));
+  useEffect(() => {
+    const init = async () => {
+      if (!currentUserId) return;
+      // Load messages between current user and other user
+      try {
+        const rows = await getMessagesBetweenUsers(currentUserId, chatId);
+        setMessages(rows);
+      } catch (e) {
+        console.error('Failed to fetch messages', e);
+      }
+
+      // Determine proximity -> anonymous or normal, and fetch profile if nearby
+      try {
+        let nearby = [] as any[];
+        if (locationData?.lat_short != null && locationData?.long_short != null) {
+          nearby = await getNearbyUsers(currentUserId, Number(locationData.lat_short), Number(locationData.long_short));
+        }
+        const isNearby = (nearby || []).some((u: any) => u.id === chatId);
+        setAnonymous(!isNearby);
+        if (isNearby) {
+          // Use nearby array data to set title & avatar
+          const user = (nearby || []).find((u: any) => u.id === chatId);
+          const display = user?.profiles?.display_name ?? 'Nearby user';
+          const avatar = user?.profiles?.social_links?.profile_pic_url ?? undefined;
+          setTitle(display);
+          setAvatarUrl(avatar);
+        } else {
+          setTitle('Anonymous');
+          setAvatarUrl(undefined);
+        }
+      } catch (e) {
+        console.error('Failed to determine proximity', e);
+      }
+    };
+    init();
+  }, [currentUserId, chatId, locationData?.lat_short, locationData?.long_short]);
 
   const groups = useMemo(() => groupByDay(messages), [messages]);
 
-  const handleSend = (text: string) => {
-    const newMsg: Message = {
-      id: `local-${Date.now()}`,
-      chatId,
-      senderId: "me",
-      type: "text",
-      text,
-      createdAt: new Date().toISOString(),
-      status: "sent",
-    };
-    setMessages((prev) => [...prev, newMsg]);
+  const handleSend = async (text: string) => {
+    if (!currentUserId || anonymous) return;
+    const res = await sendTextMessage(currentUserId, chatId, text);
+    if (res.error) {
+      console.error('Send message error:', res.error);
+      return;
+    }
+    // Optimistically append
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: res.data.id,
+        chatId,
+        senderId: 'me',
+        type: 'text',
+        text,
+        createdAt: res.data.sent_at,
+        status: 'sent',
+      },
+    ]);
   };
-
-  const title = chat?.title ?? (isAnonymousChat(chat) ? "Anonymous" : "Unknown Chat");
 
   return (
     <AppLayout>
@@ -48,8 +96,8 @@ export default function ChatDetailClient({ chatId }: ChatDetailClientProps) {
         <ChatHeader
           title={title}
           subtitle={undefined}
-          avatarUrl={chat?.avatar}
-          anonymous={isAnonymousChat(chat)}
+          avatarUrl={avatarUrl}
+          anonymous={anonymous}
         />
 
         {/* Conversation */}
@@ -58,7 +106,7 @@ export default function ChatDetailClient({ chatId }: ChatDetailClientProps) {
             <div key={group.label}>
               <DayDivider label={group.label} />
               <div className="flex flex-col gap-2">
-                {group.items.map((m) => {
+                {group.items.filter((m) => !anonymous || m.type === 'text').map((m) => {
                   const repliedTo = m.replyToId
                     ? messages.find((x) => x.id === m.replyToId)
                     : undefined;
@@ -78,8 +126,8 @@ export default function ChatDetailClient({ chatId }: ChatDetailClientProps) {
           )}
         </div>
 
-        {/* Composer */}
-        <Composer onSend={handleSend} />
+        {/* Composer disabled when anonymous */}
+        <Composer onSend={handleSend} disabled={anonymous} />
       </div>
     </AppLayout>
   );
