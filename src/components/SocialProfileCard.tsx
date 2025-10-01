@@ -29,6 +29,10 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
   const shouldTruncate = user.bio.length > maxBioLength;
   const displayBio = shouldTruncate ? `${user.bio.substring(0, maxBioLength)}...` : user.bio;
 
+  // Sanitize sample image URLs and ensure a safe fallback
+  const fallbackProfileUrl = 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png';
+  const safeProfilePhoto = (user.profilePhoto || fallbackProfileUrl).trim().replace(/["'()]/g, '');
+
   const instagramUrl = ensureSocialUrl('instagram', user.socialLinks?.instagram);
   const linkedinUrl = ensureSocialUrl('linkedin', user.socialLinks?.linkedin);
   const twitterHandle = getTwitterHandle(user.socialLinks);
@@ -46,11 +50,11 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
         {/* Profile Photo - Feed-style avatar */}
         <div className="flex-shrink-0 mt-2">
           <Image
-            src={user.profilePhoto}
+            src={safeProfilePhoto}
             alt={`${user.name}'s profile`}
-            width={40}
-            height={40}
-            className="w-10 h-10 rounded-lg object-cover cursor-pointer"
+            width={80}
+            height={80}
+            className="w-20 h-20 rounded-lg object-cover cursor-pointer"
             onClick={goToProfile}
             priority
           />
@@ -142,7 +146,7 @@ const SocialProfileCard: React.FC<SocialProfileCardProps> = React.memo(function 
 
           <button
             type="button"
-            onClick={() => router.push('/messages')}
+            onClick={() => router.push(`/messages/${user.id}`)}
             className="h-10 w-10 sm:h-12 sm:w-12 grid place-items-center rounded-md text-white hover:text-gray-300 transition-colors"
             aria-label="Send Message"
           >

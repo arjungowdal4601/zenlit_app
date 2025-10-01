@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import SocialLinkButton from '@/components/SocialLinkButton';
+import PostWithoutSocialLinks from '@/components/PostWithoutSocialLinks';
 import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
 import { useEffect, useState, useRef, useMemo } from 'react';
@@ -254,8 +255,8 @@ const OtherUserProfilePage = () => {
           </div>
 
           {/* Posts Section */}
-          <div className="bg-black rounded-lg border border-gray-800 p-6">
-            <h2 className="text-white text-xl font-bold mb-4" style={{ fontFamily: 'var(--font-inter)' }}>
+          <div className="mt-3 space-y-2 max-w-2xl mx-auto px-4">
+            <h2 className="text-xl font-semibold text-white mb-2" style={{ fontFamily: 'var(--font-inter)' }}>
               Posts
             </h2>
             
@@ -264,51 +265,25 @@ const OtherUserProfilePage = () => {
                 No posts yet
               </p>
             ) : (
-              <div className="space-y-4">
-                {posts.map((post) => (
-                  <div key={post.id} className="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                    <div className="flex items-start space-x-3">
-                      {/* Author Profile Picture */}
-                      <div className="flex-shrink-0">
-                        <Image
-                          src={getProfilePictureUrl(userProfile.socialLinks)}
-                          alt={userProfile.profile.display_name || userProfile.profile.user_name}
-                          width={40}
-                          height={40}
-                          className="w-10 h-10 rounded-lg object-cover"
-                        />
-                      </div>
-
-                      {/* Post Content */}
-                      <div className="flex-1 min-w-0">
-                        {/* Author Info - No timestamp */}
-                        <div className="mb-2">
-                          <h3 className="text-white font-semibold text-base">{userProfile.profile.display_name || userProfile.profile.user_name}</h3>
-                          <span className="text-gray-400 text-sm">@{userProfile.profile.user_name}</span>
-                        </div>
-
-                        {/* Post Text */}
-                        <p className="text-gray-300 text-sm leading-relaxed" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {post.text}
-                        </p>
-
-                        {/* Post Image */}
-                        {post.image_url && (
-                          <div className="mt-3">
-                            <Image
-                              src={post.image_url}
-                              alt="Post image"
-                              width={400}
-                              height={300}
-                              className="rounded-lg object-cover max-w-full h-auto"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              posts.map((post, index) => (
+                <div key={post.id}>
+                  <PostWithoutSocialLinks
+                    id={post.id}
+                    author={{
+                      name: userProfile.profile.display_name || userProfile.profile.user_name,
+                      username: userProfile.profile.user_name,
+                      avatar: getProfilePictureUrl(userProfile.socialLinks),
+                      socialLinks: getSocialMediaLinks(userProfile.socialLinks),
+                    }}
+                    content={post.text || ''}
+                    timestamp={new Date(post.created_at).toLocaleDateString()}
+                    image={post.image_url || undefined}
+                  />
+                  {index < posts.length - 1 && (
+                    <div className="border-t border-gray-700 mb-3"></div>
+                  )}
+                </div>
+              ))
             )}
           </div>
         </div>

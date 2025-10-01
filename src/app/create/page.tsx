@@ -14,7 +14,7 @@ export default function CreatePostScreen() {
   const [userProfile, setUserProfile] = useState<CompleteUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [content, setContent] = useState('✨ Share your thoughts with the world! What\'s on your mind today? #ZenlitMoments');
+  const [content, setContent] = useState('');
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -94,15 +94,6 @@ export default function CreatePostScreen() {
         <div className="max-w-2xl mx-auto px-4">
           <AppHeader 
             title="Create Post"
-            left={
-              <button
-                onClick={() => router.back()}
-                className="p-2 hover:bg-gray-800 rounded-full transition-colors"
-                aria-label="Go back"
-              >
-                <ArrowLeft className="w-5 h-5 text-white" />
-              </button>
-            }
           />
 
           {/* Editable Post Component */}
