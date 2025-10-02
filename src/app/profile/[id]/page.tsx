@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import SocialLinkButton from '@/components/SocialLinkButton';
-import PostWithoutSocialLinks from '@/components/PostWithoutSocialLinks';
+import Post from '@/components/Post';
 import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
 import { useEffect, useState, useRef, useMemo } from 'react';
@@ -267,7 +267,7 @@ const OtherUserProfilePage = () => {
             ) : (
               posts.map((post, index) => (
                 <div key={post.id}>
-                  <PostWithoutSocialLinks
+                  <Post
                     id={post.id}
                     author={{
                       name: userProfile.profile.display_name || userProfile.profile.user_name,
@@ -278,6 +278,7 @@ const OtherUserProfilePage = () => {
                     content={post.text || ''}
                     timestamp={new Date(post.created_at).toLocaleDateString()}
                     image={post.image_url || undefined}
+                    showSocialLinks={false}
                   />
                   {index < posts.length - 1 && (
                     <div className="border-t border-gray-700 mb-3"></div>
