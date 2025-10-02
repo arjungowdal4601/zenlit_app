@@ -9,6 +9,29 @@ import Image from 'next/image';
 import { supabase } from '@/utils/supabaseClient';
 
 export default function CompleteProfileOnboardingPage() {
+  // Helper: extract username/handle from a social link or handle
+  const extractUsername = (value?: string | null) => {
+    if (!value) return 'No link added';
+    const trimmed = value.trim();
+    if (!trimmed) return 'No link added';
+    // If starts with @, treat remainder as username
+    if (trimmed.startsWith('@')) return trimmed.slice(1);
+    // If it's a full URL, parse the pathname and take last non-empty segment
+    try {
+      const u = new URL(trimmed);
+      const parts = u.pathname.split('/').filter(Boolean);
+      if (!parts.length) return u.hostname;
+      // Special handling for LinkedIn /in/<username>
+      const inIndex = parts.indexOf('in');
+      if (inIndex >= 0 && parts[inIndex + 1]) return parts[inIndex + 1];
+      return parts[parts.length - 1];
+    } catch {
+      // Not a URL: if it contains slashes, take last segment; else return as-is
+      const pseudoParts = trimmed.split('/').filter(Boolean);
+      return pseudoParts.length ? pseudoParts[pseudoParts.length - 1] : trimmed;
+    }
+  };
+
   const router = useRouter();
 
   // Initial state for comparison
@@ -490,9 +513,9 @@ export default function CompleteProfileOnboardingPage() {
               </label>
               <div className="space-y-4">
                 {/* Instagram Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-purple-400" 
+                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:border-purple-400 overflow-hidden" 
                      style={{ boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)', background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)' }}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
                       <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-600 via-pink-600 to-orange-400 flex items-center justify-center flex-shrink-0">
                         <Instagram className="w-7 h-7 text-white" />
@@ -502,26 +525,25 @@ export default function CompleteProfileOnboardingPage() {
                           Instagram
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.instagram || 'No link added'}
+                          {extractUsername(socialLinks.instagram)}
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.instagram); setModalStates(prev => ({ ...prev, instagram: true })); }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                      className="h-10 w-10 grid place-items-center bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex-shrink-0"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit
+                      <Edit className="w-4 h-4" aria-label="Edit link" />
                     </button>
                   </div>
                 </div>
 
                 {/* X (Twitter) Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-gray-400" 
+                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:border-gray-400 overflow-hidden" 
                      style={{ boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)', background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)' }}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
                       <div className="w-12 h-12 rounded-lg bg-black border-2 border-gray-600 flex items-center justify-center flex-shrink-0">
                         <FaXTwitter className="w-6 h-6 text-white" />
@@ -531,26 +553,25 @@ export default function CompleteProfileOnboardingPage() {
                           X
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.twitter || 'No link added'}
+                          {extractUsername(socialLinks.twitter)}
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.twitter); setModalStates(prev => ({ ...prev, x: true })); }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                      className="h-10 w-10 grid place-items-center bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex-shrink-0"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit
+                      <Edit className="w-4 h-4" aria-label="Edit link" />
                     </button>
                   </div>
                 </div>
 
                 {/* LinkedIn Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-blue-400" 
+                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:border-blue-400 overflow-hidden" 
                      style={{ boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)', background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)' }}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
                       <div className="w-12 h-10 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
                         <FaLinkedin className="w-6 h-6 text-white" />
@@ -560,18 +581,17 @@ export default function CompleteProfileOnboardingPage() {
                           LinkedIn
                         </h3>
                         <p className="text-gray-400 text-sm truncate" style={{ fontFamily: 'var(--font-inter)' }}>
-                          {socialLinks.linkedin || 'No link added'}
+                          {extractUsername(socialLinks.linkedin)}
                         </p>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); setIsSubmitting(false); setTempSocialInput(socialLinks.linkedin); setModalStates(prev => ({ ...prev, linkedin: true })); }}
-                      className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center gap-2"
+                      className="h-10 w-10 grid place-items-center bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex-shrink-0"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
-                      <Edit className="w-4 h-4" />
-                      Edit
+                      <Edit className="w-4 h-4" aria-label="Edit link" />
                     </button>
                   </div>
                 </div>

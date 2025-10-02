@@ -652,12 +652,12 @@ import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageC
               </label>
               <div className="space-y-4">
                 {/* Instagram Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-purple-400" 
+                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:border-purple-400 overflow-hidden" 
                      style={{ 
                        boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                        background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)'
                      }}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     {/* Left side: Logo and content */}
                     <div className="flex items-start gap-4 flex-1">
                       {/* Instagram Logo - Larger */}
@@ -686,7 +686,7 @@ import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageC
                         setTempSocialInput(socialLinks.instagram);
                         setModalStates(prev => ({ ...prev, instagram: true }));
                       }}
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center"
+                      className="h-10 w-10 grid place-items-center bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex-shrink-0"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
                       <Edit className="w-4 h-4" aria-label="Edit link" />
@@ -695,12 +695,12 @@ import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageC
                 </div>
 
                 {/* X (Twitter) Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-gray-400" 
+                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:border-gray-400 overflow-hidden" 
                      style={{ 
                        boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                        background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)'
                      }}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     {/* Left side: Logo and content */}
                     <div className="flex items-start gap-4 flex-1">
                       {/* X Logo - Larger */}
@@ -729,7 +729,7 @@ import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageC
                         setTempSocialInput(socialLinks.x);
                         setModalStates(prev => ({ ...prev, x: true }));
                       }}
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center"
+                      className="h-10 w-10 grid place-items-center bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex-shrink-0"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
                       <Edit className="w-4 h-4" aria-label="Edit link" />
@@ -738,12 +738,12 @@ import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageC
                 </div>
 
                 {/* LinkedIn Card */}
-                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transform transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:border-blue-400" 
+                <div className="bg-black border border-white rounded-lg p-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:border-blue-400 overflow-hidden" 
                      style={{ 
                        boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                        background: 'linear-gradient(145deg, #1a1a1a, #0d0d0d)'
                      }}>
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-4">
                     {/* Left side: Logo and content */}
                     <div className="flex items-start gap-4 flex-1">
                       {/* LinkedIn Logo - Larger */}
@@ -772,7 +772,7 @@ import { compressImage, validateImageFile, formatFileSize } from '@/utils/imageC
                         setTempSocialInput(socialLinks.linkedin);
                         setModalStates(prev => ({ ...prev, linkedin: true }));
                       }}
-                      className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center"
+                      className="h-10 w-10 grid place-items-center bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors flex-shrink-0"
                       style={{ fontFamily: 'var(--font-inter)' }}
                     >
                       <Edit className="w-4 h-4" aria-label="Edit link" />
