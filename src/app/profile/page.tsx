@@ -6,7 +6,7 @@ import AppLayout from '@/components/AppLayout';
 import AppHeader from '@/components/AppHeader';
 import LogoutConfirmation from '@/components/LogoutConfirmation';
 import SocialLinkButton from '@/components/SocialLinkButton';
-import PostWithoutSocialLinks from '@/components/PostWithoutSocialLinks';
+import Post from '@/components/Post';
 import { ensureSocialUrl } from '@/constants/socialPlatforms';
 import Image from 'next/image';
 import { MoreHorizontal, Edit, MessageSquare, LogOut, FileText } from 'lucide-react';
@@ -421,18 +421,19 @@ const ProfileScreen = () => {
                       )}
                     </div>
 
-                    <PostWithoutSocialLinks
-                        id={post.id}
-                        author={{
-                          name: userProfile?.profile.display_name || 'User',
-                          username: userProfile?.profile.user_name || 'user',
-                          avatar: getProfilePictureUrl(userProfile?.socialLinks || null),
-                          socialLinks: getSocialMediaLinks(userProfile?.socialLinks || null)
-                        }}
-                        content={post.text || ''}
-                        timestamp={new Date(post.created_at).toLocaleDateString()}
-                        image={post.image_url || undefined}
-                      />
+                    <Post
+                      id={post.id}
+                      author={{
+                        name: userProfile?.profile.display_name || 'User',
+                        username: userProfile?.profile.user_name || 'user',
+                        avatar: getProfilePictureUrl(userProfile?.socialLinks || null),
+                        socialLinks: getSocialMediaLinks(userProfile?.socialLinks || null),
+                      }}
+                      content={post.text || ''}
+                      timestamp={new Date(post.created_at).toLocaleDateString()}
+                      image={post.image_url || undefined}
+                      showSocialLinks={false}
+                    />
                   </div>
                   
                   {/* Separator Line between posts (not after the last post) */}

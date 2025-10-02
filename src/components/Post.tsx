@@ -16,9 +16,17 @@ interface PostProps {
   image?: string;
   timestamp: string;
   selectedAccounts?: SocialPlatformId[];
+  showSocialLinks?: boolean;
 }
 
-const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VISIBLE_PLATFORMS }: PostProps) => {
+const Post = ({
+  author,
+  content,
+  image,
+  timestamp,
+  selectedAccounts = DEFAULT_VISIBLE_PLATFORMS,
+  showSocialLinks = true,
+}: PostProps) => {
   const instagramUrl = ensureSocialUrl('instagram', author.socialLinks?.instagram);
   const linkedinUrl = ensureSocialUrl('linkedin', author.socialLinks?.linkedin);
   const twitterHandle = getTwitterHandle(author.socialLinks);
@@ -27,7 +35,7 @@ const Post = ({ author, content, image, timestamp, selectedAccounts = DEFAULT_VI
   return (
     <div className="mb-3 relative">
       {/* Social Links - Top Right */}
-      {author.socialLinks && (
+      {showSocialLinks && author.socialLinks && (
         <div className="absolute top-0 right-0 mt-2 flex items-center space-x-3">
           {selectedAccounts.includes('instagram') && instagramUrl && (
             <SocialLinkButton
